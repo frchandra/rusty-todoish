@@ -1,9 +1,11 @@
-use axum::{response::IntoResponse, routing::get, Json, Router};
+mod api;
+
 use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new().route("/api/v1/healthcheck", get(health_check_handler));
+    let app = api::routes::health_check_routes::routes();
+    //create router from the router module
 
     println!("Server started successfully at 0.0.0.0:8080");
 
@@ -11,15 +13,4 @@ async fn main() {
     axum::serve(listener, app.into_make_service())
         .await
         .unwrap();
-}
-
-pub async fn health_check_handler() -> impl IntoResponse {
-    const MESSAGE: &str = "API Services";
-
-    let json_response = serde_json::json!({
-        "status": "ok",
-        "message": MESSAGE
-    });
-
-    Json(json_response)
 }
