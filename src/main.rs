@@ -1,4 +1,5 @@
 mod api;
+mod infra;
 
 use dotenvy::dotenv;
 use sqlx::PgPool;
