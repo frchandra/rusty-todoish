@@ -11,5 +11,5 @@ use crate::{
 
 pub fn routes() -> Router<()> {
     Router::new()
-        .route("/rest/v1/health_check", get(health_check_handler))
+        .route("/api/v1/health_check", get(health_check_handler))
 }

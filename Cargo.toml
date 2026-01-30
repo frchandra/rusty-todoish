@@ -13,3 +13,4 @@ sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "chr
 tokio = { version = "1.49.0", features = ["full"] }
 tower-http = { version = "0.6.8", features = ["cors"] }
 uuid = { version = "1.19.0", features = ["serde", "v4"] }
+config = "0.15.19"
