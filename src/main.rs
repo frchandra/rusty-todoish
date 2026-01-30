@@ -1,5 +1,6 @@
-mod api;
+mod rest;
 mod infra;
+mod models;
 
 use dotenvy::dotenv;
 use sqlx::PgPool;
@@ -43,7 +44,7 @@ async fn main() {
 
 
     //create router from the router module
-    let app = api::routes::health_check_routes::routes();
+    let app = rest::routes::health_check_routes::routes();
 
 
     println!("Server started successfully at 0.0.0.0:8080");

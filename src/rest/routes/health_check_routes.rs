@@ -4,12 +4,12 @@ use axum::{
 };
 
 use crate::{
-    api::handlers::health_check_handlers::{
+    rest::handlers::health_check_handlers::{
         health_check_handler
     }
 };
 
 pub fn routes() -> Router<()> {
     Router::new()
-        .route("/api/v1/health_check", get(health_check_handler))
+        .route("/rest/v1/health_check", get(health_check_handler))
 }
