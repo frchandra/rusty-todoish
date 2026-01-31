@@ -19,7 +19,7 @@ impl AppConfig {
 
         Self {
             database_url,
-            bind_addr: "0.0.0.0:8080".to_string(),
+            bind_addr: "127.0.0.1:8080".to_string(),
         }
     }
 }
