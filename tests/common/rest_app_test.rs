@@ -1,10 +1,13 @@
 use std::time::{Duration, Instant};
+use tokio::net::TcpListener;
+
 use dotenvy::dotenv;
 use reqwest::StatusCode;
-use tokio::net::TcpListener;
-use rusty_todoish::app::config::AppConfig;
-use rusty_todoish::app::rest_app::create_rest_app;
-use rusty_todoish::infra::postgres::instance::create_instance;
+
+use rusty_todoish::{
+    app::{config::AppConfig, rest_app::create_rest_app},
+    infra::postgres::instance::create_instance,
+};
 
 pub async fn start_server() {
     dotenv().ok();
