@@ -2,7 +2,7 @@ use axum::ServiceExt;
 use dotenvy::dotenv;
 use tokio::net::TcpListener;
 
-use rusty_todoish::app::app::run;
+use rusty_todoish::app;
 
 
 #[tokio::main]
@@ -13,7 +13,7 @@ async fn main() {
     // let config = AppConfig::from_env();
     // let pool = create_instance(&config.database_url).await;
 
-    let app = run();
+    app::app::run().await;
 
     // println!("Server started at {}", config.bind_addr);
 
