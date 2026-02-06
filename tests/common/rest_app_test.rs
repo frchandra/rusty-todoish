@@ -5,7 +5,7 @@ use dotenvy::dotenv;
 use reqwest::StatusCode;
 
 use rusty_todoish::{
-    app::{config::AppConfig, rest_app::create_rest_app},
+    app::{config::AppConfig, app::run},
     infra::postgres::instance::create_instance,
 };
 
@@ -16,7 +16,7 @@ pub async fn start_server() {
     let config = AppConfig::from_env();
     let pool = create_instance(&config.database_url).await;
 
-    let app = create_rest_app(pool);
+    let app = run(pool);
     println!("{:?}", Instant::now());
 
     // Run the rest server

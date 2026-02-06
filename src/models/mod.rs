@@ -1,1 +1,1 @@
-mod note;
+pub mod note;
