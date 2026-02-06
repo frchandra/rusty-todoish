@@ -9,7 +9,9 @@ use crate::{
     }
 };
 
-pub fn routes() -> Router<()> {
+use crate::app::state::AppState;
+
+pub fn routes() -> Router<(AppState)> {
     Router::new()
         .route("/api/v1/health_check", get(health_check_handler))
 }

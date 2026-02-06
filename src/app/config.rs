@@ -1,5 +1,6 @@
 use std::env;
 
+#[derive(Clone)]
 pub struct AppConfig {
     pub database_url: String,
     pub bind_addr: String,
