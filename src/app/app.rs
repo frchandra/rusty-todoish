@@ -1,7 +1,7 @@
 use crate::app::config::AppConfig;
 use crate::app::state::AppState;
 use crate::infra::postgres::instance::create_instance;
-use crate::rest::routes::health_check_routes;
+use crate::rest::routes::{health_check_routes, notes_routes};
 use axum::Router;
 use tokio::net::TcpListener;
 
@@ -18,6 +18,7 @@ pub async fn run() {
 
     let app = Router::new()
         .merge(health_check_routes::routes())
+        .merge(notes_routes::routes())
         .with_state(app_state);
 
     let listener = TcpListener::bind(bind_addr).await.unwrap();

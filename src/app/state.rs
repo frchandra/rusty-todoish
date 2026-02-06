@@ -1,4 +1,4 @@
-use sqlx::postgres::{PgPool, PgPoolOptions};
+use sqlx::postgres::{PgPool, /*PgPoolOptions*/};
 use crate::app::config::AppConfig;
 
 #[derive(Clone)]

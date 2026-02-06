@@ -4,8 +4,8 @@ use axum::{
 };
 
 use crate::{
-    rest::handlers::health_check_handlers::{
-        health_check_handler
+    rest::handlers::notes_handlers::{
+        note_list_handler
     }
 };
 
@@ -13,5 +13,5 @@ use crate::app::state::AppState;
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/api/v1/health_check", get(health_check_handler))
+        .route("/api/v1/notes", get(note_list_handler))
 }
