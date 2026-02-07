@@ -1,6 +1,7 @@
 mod common;
+mod notes_test;
 
-use common::rest_app_test;
+use common::test_server;
 use reqwest::StatusCode;
 use serial_test::serial;
 
@@ -8,7 +9,7 @@ use serial_test::serial;
 #[serial]
 async fn health_check_test() {
     // Start rest server
-    rest_app_test::start_server().await;
+    test_server::start_server().await;
 
     let url = "http://127.0.0.1:8080/api/v1/health_check";
     let response = reqwest::get(url).await.unwrap();
@@ -25,7 +26,7 @@ async fn health_check_test() {
 #[serial]
 async fn list_notes_test() {
     // Start rest server
-    rest_app_test::start_server().await;
+    test_server::start_server().await;
 
     let url = "http://127.0.0.1:8080/api/v1/notes";
     let response = reqwest::get(url).await.unwrap();

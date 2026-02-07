@@ -1,1 +1,2 @@
-pub mod rest_app_test;
+pub mod test_server;
+pub mod dummy_factory;
