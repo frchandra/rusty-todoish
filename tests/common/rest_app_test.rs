@@ -1,36 +1,23 @@
-use std::time::{Duration, Instant};
-use tokio::net::TcpListener;
-
 use dotenvy::dotenv;
 use reqwest::StatusCode;
+use std::time::{Duration, Instant};
 
-use rusty_todoish::{
-    app::{config::AppConfig, app::run},
-    infra::postgres::instance::create_instance,
-};
+use rusty_todoish::app;
 
 pub async fn start_server() {
     dotenv().ok();
-    println!("Starting nserver...");
-
-    let config = AppConfig::from_env();
-    let pool = create_instance(&config.database_url).await;
-
-    let app = run(pool);
-    println!("{:?}", Instant::now());
-
-    // Run the rest server
-    let listener = TcpListener::bind(&config.bind_addr).await.unwrap();
-
-
-
+    println!("Starting server...");
+    let (server, listener) = app::server::build_server_and_listener()
+        .await
+        .expect("Failed to build app and listener");
+    //run the server
     tokio::spawn(async move {
-        axum::serve(listener, app.into_make_service()).await;
+        axum::serve(listener, server.into_make_service())
+            .await
+            .expect("Failed to run the server");
     });
     println!("{:?}", Instant::now());
     wait_for_service(Duration::from_secs(30)).await;
-
-    println!("Server started at {}", config.bind_addr);
 }
 
 async fn wait_for_service(duration: Duration) {

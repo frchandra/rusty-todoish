@@ -1,3 +1,3 @@
 pub mod config;
-pub mod app;
+pub mod server;
 pub mod state;
