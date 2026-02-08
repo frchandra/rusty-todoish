@@ -1,5 +1,4 @@
-mod common;
-mod notes_test;
+pub mod common;
 
 use common::test_server;
 use reqwest::StatusCode;
