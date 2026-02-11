@@ -5,7 +5,7 @@ use axum::{
     response::IntoResponse,
 };
 
-
+use crate::app::repositories::notes_repositories;
 use crate::{
     app::state::AppState,
     models::note::{NoteModel, NoteModelResponse},
@@ -20,22 +20,15 @@ pub async fn note_list_handler(
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
-    // Query with macro
-    let notes = sqlx::query_as!(
-        NoteModel,
-        r#"SELECT * FROM notes ORDER BY id LIMIT $1 OFFSET $2"#,
-        limit as i64,
-        offset as i64
-    )
-    .fetch_all(&data.db_pool)
-    .await
-    .map_err(|e| {
-        let error_response = serde_json::json!({
-            "status": "error",
-            "message": format!("Database error: {}", e),
-        });
-        (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
-    })?;
+    let notes = notes_repositories::list_notes(&data, limit as i64, offset as i64)
+        .await
+        .map_err(|e| {
+            let error_response = serde_json::json!({
+                "status": "error",
+                "message": format!("Database error: {}", e),
+            });
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+        })?;
 
     // Response
     let note_responses = notes
