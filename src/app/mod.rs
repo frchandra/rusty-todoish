@@ -3,3 +3,4 @@ pub mod server;
 pub mod state;
 pub mod repositories;
 pub mod services;
+mod errors;

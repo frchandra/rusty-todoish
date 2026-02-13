@@ -16,3 +16,4 @@ uuid = { version = "1.19.0", features = ["serde", "v4"] }
 config = "0.15.19"
 reqwest = "0.13.1"
 serial_test = "3.3.1"
+tracing = "0.1.44"
