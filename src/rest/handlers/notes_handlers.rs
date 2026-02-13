@@ -5,7 +5,7 @@ use axum::{
     response::IntoResponse,
 };
 
-use crate::app::repositories::notes_repositories;
+use crate::app::services::notes_services;
 use crate::{
     app::state::AppState,
     models::note::{NoteModel, NoteModelResponse},
@@ -14,13 +14,13 @@ use crate::{
 
 pub async fn note_list_handler(
     Query(opts): Query<FilterOptions>,
-    State(data): State<AppState>,
+    State(app_state): State<AppState>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     // Param
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
-    let notes = notes_repositories::list_notes(&data, limit as i64, offset as i64)
+    let notes = notes_services::list_notes(&app_state, limit as i64, offset as i64)
         .await
         .map_err(|e| {
             let error_response = serde_json::json!({

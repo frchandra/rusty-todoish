@@ -1,1 +1,1 @@
-mod notes_services;
+pub mod notes_services;
