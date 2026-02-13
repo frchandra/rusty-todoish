@@ -13,6 +13,17 @@ pub struct AppError {
     pub errors: Vec<ErrorEntry>,
 }
 
+//implement Display for AppError
+impl Display for AppError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        write!(
+            f,
+            "AppError: {:?}, Errors: {:?}",
+            self.error_code, self.errors
+        )
+    }
+}
+
 impl From<sqlx::Error> for AppError {
     fn from(error: sqlx::Error) -> Self {
         let status_code = match error {
