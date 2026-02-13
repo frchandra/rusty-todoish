@@ -9,33 +9,26 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 pub struct AppError {
-    pub error_code: ErrorCode,
-    pub error_kind: ErrorKind,
+    pub error_code: AppErrorCode,
     pub errors: Vec<ErrorEntry>,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum ErrorKind {
-    AuthenticationError,
-    ResourceNotFound,
-    ValidationError,
-    DatabaseError,
-}
-
-impl Display for ErrorKind {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(
-            f,
-            "{}",
-            serde_json::json!(self).as_str().unwrap_or_default()
-        )
+impl From<sqlx::Error> for AppError {
+    fn from(error: sqlx::Error) -> Self {
+        let status_code = match error {
+            sqlx::Error::RowNotFound => AppErrorCode::ResourceNotFound,
+            _ => AppErrorCode::DatabaseError,
+        };
+        Self {
+            error_code: status_code,
+            errors: vec![ErrorEntry::from(error)],
+        }
     }
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum ErrorCode {
+pub enum AppErrorCode {
     AuthenticationWrongCredentials,
     AuthenticationMissingCredentials,
     AuthenticationTokenCreationError,
@@ -54,7 +47,7 @@ pub enum ErrorCode {
     RedisError,
 }
 
-impl Display for ErrorCode {
+impl Display for AppErrorCode {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
@@ -66,24 +59,12 @@ impl Display for ErrorCode {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ErrorEntry {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub code: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub kind: Option<String>,
     pub message: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub detail: Option<serde_json::Value>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reason: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub instance: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trace_id: Option<String>,
     pub timestamp: DateTime<Utc>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub help: Option<String>,
 }
 
 impl ErrorEntry {
@@ -93,31 +74,6 @@ impl ErrorEntry {
             timestamp: Utc::now(),
             ..Default::default()
         }
-    }
-
-    pub fn code<S: ToString>(mut self, code: S) -> Self {
-        self.code = Some(code.to_string());
-        self
-    }
-
-    pub fn kind<S: ToString>(mut self, kind: S) -> Self {
-        self.kind = Some(kind.to_string());
-        self
-    }
-
-    pub fn description(mut self, description: &str) -> Self {
-        self.description = Some(description.to_owned());
-        self
-    }
-
-    pub fn detail(mut self, detail: serde_json::Value) -> Self {
-        self.detail = Some(detail);
-        self
-    }
-
-    pub fn reason(mut self, reason: &str) -> Self {
-        self.reason = Some(reason.to_owned());
-        self
     }
 
     pub fn instance(mut self, instance: &str) -> Self {
@@ -132,22 +88,16 @@ impl ErrorEntry {
         self.trace_id = Some(trace_id);
         self
     }
-
-    pub fn help(mut self, help: &str) -> Self {
-        self.help = Some(help.to_owned());
-        self
-    }
 }
-
 
 impl From<sqlx::Error> for ErrorEntry {
     fn from(e: sqlx::Error) -> Self {
-/*        // Do not disclose database-related internal specifics, except for debug builds.
-        if cfg!(debug_assertions) {
+        // Do not disclose database-related internal specifics, except for debug builds.
+        /*        if cfg!(debug_assertions) {
             let (code, kind) = match e {
                 sqlx::Error::RowNotFound => (
-                    ErrorCode::ResourceNotFound,
-                    ErrorKind::ResourceNotFound,
+                    APIErrorCode::ResourceNotFound,
+                    APIErrorKind::ResourceNotFound,
                 ),
                 _ => (APIErrorCode::DatabaseError, APIErrorKind::DatabaseError),
             };
@@ -160,14 +110,6 @@ impl From<sqlx::Error> for ErrorEntry {
             tracing::error!("SQLx error: {}, trace id: {}", e.to_string(), trace_id);
             error_entry
         }*/
-        let (code, kind) = match e {
-            sqlx::Error::RowNotFound => (
-                ErrorCode::ResourceNotFound,
-                ErrorKind::ResourceNotFound,
-            ),
-            _ => (ErrorCode::DatabaseError, ErrorKind::DatabaseError),
-        };
-        Self::new(&e.to_string()).code(code).kind(kind).trace_id()
-
+        Self::new(&e.to_string()).trace_id()
     }
 }

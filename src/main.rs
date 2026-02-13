@@ -10,5 +10,9 @@ async fn main() {
         .await
         .expect("Failed to build app and listener");
     //run the server
-    axum::serve(listener, server.into_make_service()).await.expect("Failed to run the server");
+    axum::serve(listener, server.into_make_service())
+        .await
+        .expect("Failed to run the server");
 }
+
+// TODO: get one user by id and implement error not found
