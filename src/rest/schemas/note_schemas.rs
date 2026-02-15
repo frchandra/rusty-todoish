@@ -1,10 +1,22 @@
-use serde::{Deserialize, /*Serialize*/};
+use serde::{Deserialize, Serialize};
 
 /// Query parameters for listing notes with pagination
 #[derive(Deserialize, Debug, Default)]
 pub struct FilterOptions {
     pub page: Option<usize>,
     pub limit: Option<usize>,
+}
+
+/// JSON response models for a note
+#[derive(Debug, Deserialize, Serialize)]
+#[allow(non_snake_case)]
+pub struct NoteModelResponse {
+    pub id: uuid::Uuid,
+    pub title: String,
+    pub content: String,
+    pub is_published: bool,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 // /// Schema for creating a new note
