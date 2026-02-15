@@ -17,3 +17,18 @@ pub async fn list_notes(
 
     Ok(notes)
 }
+
+pub async fn get_note_by_id(
+    app_state: &AppState,
+    note_id: uuid::Uuid,
+) -> Result<NoteModel, sqlx::Error> {
+    let note = sqlx::query_as!(
+        NoteModel,
+        r#"SELECT * FROM notes WHERE id = $1::uuid"#,
+        note_id
+    )
+    .fetch_one(&app_state.db_pool)
+    .await?;
+
+    Ok(note)
+}

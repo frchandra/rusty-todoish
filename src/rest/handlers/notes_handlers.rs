@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{/*Path,*/ Query, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
 };
@@ -8,8 +8,10 @@ use axum::{
 use crate::app::services::notes_services;
 use crate::{
     app::state::AppState,
-    models::note::{NoteModel, NoteModelResponse},
-    rest::schemas::note_schemas::{/*CreateNoteSchema,*/ FilterOptions, /*UpdateNoteSchema*/},
+    models::note::NoteModel,
+    rest::schemas::note_schemas::{
+        /*CreateNoteSchema,*/ FilterOptions, /*UpdateNoteSchema,*/ NoteModelResponse,
+    },
 };
 
 pub async fn note_list_handler(
@@ -36,16 +38,30 @@ pub async fn note_list_handler(
         .map(to_note_response)
         .collect::<Vec<NoteModelResponse>>();
 
-    let json_response = serde_json::json!({
-        "status": "ok",
-        "count": note_responses.len(),
-        "notes": note_responses
-    });
+    let json_response = serde_json::json!(note_responses);
 
     Ok(Json(json_response))
 }
 
-// Convert DB Model to Response
+// implement get_note_handler
+pub async fn get_note_handler(
+    Path(note_id): Path<uuid::Uuid>,
+    State(app_state): State<AppState>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    let note = notes_services::get_note_by_id(&app_state, note_id)
+        .await
+        .map_err(|e| {
+            let error_response = serde_json::json!({
+                "message": format!("{}", e),
+            });
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+        })?;
+
+    let note_response = to_note_response(&note);
+
+    Ok(Json(serde_json::json!(note_response)))
+}
+
 fn to_note_response(note: &NoteModel) -> NoteModelResponse {
     NoteModelResponse {
         id: note.id.to_owned(),
