@@ -2,12 +2,17 @@ use std::env;
 
 #[derive(Clone)]
 pub struct AppConfig {
+    pub service_name: String,
+    pub service_version: String,
     pub database_url: String,
-    pub bind_addr: String,
+    pub service_url: String,
 }
 
 impl AppConfig {
     pub fn from_env() -> Self {
+        let service_name = env::var("SERVICE_NAME").unwrap_or_else(|_| "SERVICE NAME missing".to_string());
+        let service_version = env::var("SERVICE_VERSION").unwrap_or_else(|_| "SERVICE VERSION missing".to_string());
+
         let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
             let db = env::var("POSTGRES_DATABASE_NAME").expect("POSTGRES_DATABASE_NAME missing");
             let user = env::var("POSTGRES_USERNAME").expect("POSTGRES_USERNAME missing");
@@ -18,9 +23,17 @@ impl AppConfig {
             format!("postgres://{}:{}@{}:{}/{}", user, pass, host, port, db)
         });
 
+        let service_url = {
+            let ip = env::var("SERVICE_HOST").expect("BIND_ADDRESS missing");
+            let port = env::var("SERVICE_PORT").expect("BIND_PORT missing");
+            format!("{}:{}", ip, port)
+        };
+
         Self {
+            service_name,
+            service_version,
             database_url,
-            bind_addr: "127.0.0.1:8080".to_string(),
+            service_url,
         }
     }
 }

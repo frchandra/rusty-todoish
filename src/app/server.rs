@@ -9,7 +9,7 @@ pub async fn build_server_and_listener() -> Result<(Router, TcpListener), std::i
     let app_config = AppConfig::from_env();
     let db_pool = create_instance(app_config.database_url.as_str()).await;
 
-    let bind_addr = app_config.bind_addr.clone();
+    let bind_addr = app_config.service_url.clone();
 
     let app_state = AppState { app_config, db_pool };
 
