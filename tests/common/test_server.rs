@@ -1,5 +1,6 @@
 use dotenvy::dotenv;
 use reqwest::StatusCode;
+use std::env;
 use std::time::{Duration, Instant};
 
 use rusty_todoish::app;
@@ -22,9 +23,11 @@ pub async fn start_server() {
 
 async fn wait_for_service(duration: Duration) {
     let timeout = Instant::now() + duration;
+    let service_host = env::var("SERVICE_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let service_port = env::var("SERVICE_PORT").unwrap_or_else(|_| "8080".to_string());
+    let url = format!("http://{}:{}/", service_host, service_port);
     loop {
-        let url = "http://127.0.0.1:8080/";
-        if let Ok(response) = reqwest::get(url).await
+        if let Ok(response) = reqwest::get(&url).await
             && response.status() == StatusCode::OK
         {
             break;

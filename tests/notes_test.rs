@@ -3,6 +3,13 @@ pub mod common;
 use crate::common::test_server;
 use common::dummy_factory;
 use serial_test::serial;
+use std::{env, sync::LazyLock};
+
+static ROOT_URL: LazyLock<String> = LazyLock::new(|| {
+    let service_host = env::var("SERVICE_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+    let service_port = env::var("SERVICE_PORT").unwrap_or_else(|_| "8080".to_string());
+    format!("http://{}:{}", service_host, service_port)
+});
 
 #[tokio::test]
 //create a test function for populating notes table using dummy_factory
@@ -25,9 +32,9 @@ use serde_json::Value;
 async fn list_notes_test() {
     test_server::start_server().await;
 
-    let url = "http://127.0.0.1:8080/api/v1/notes";
+    let url = format!("{}/notes", &*ROOT_URL);
 
-    let response = reqwest::get(url).await.expect("request failed");
+    let response = reqwest::get(&url).await.expect("request failed");
 
     assert_eq!(response.status(), reqwest::StatusCode::OK);
 
