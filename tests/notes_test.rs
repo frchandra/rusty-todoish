@@ -56,3 +56,48 @@ async fn list_notes_test() {
         println!("... (trimmed)");
     }
 }
+
+
+// Create a test unit for testing get one note by id endpoint /notes/{id}
+// here is the flow
+// get all notes and get the id (uuid) of the first note
+// then call the endpoint /notes/{id} with the id of the first note
+// then assert that the response status is 200 OK
+// then just print the response body in json format in terminal
+#[tokio::test]
+#[serial]
+async fn get_note_by_id_test() {
+    test_server::start_server().await;
+
+    let url = format!("{}/notes", &*ROOT_URL);
+
+    let response = reqwest::get(&url).await.expect("request failed");
+
+    assert_eq!(response.status(), reqwest::StatusCode::OK);
+
+    let body = response.text().await.expect("failed to read response body");
+
+    // Parse JSON
+    let json: Value = serde_json::from_str(&body).expect("response is not valid JSON");
+
+    // Get the first note's id
+    let first_note_id = json[0]["id"].as_str().unwrap();
+
+    print!("First note id: {first_note_id}\n");
+
+    // Call endpoint /notes/{id} with the id of the first note
+    let url = format!("{}/notes/{}", &*ROOT_URL, first_note_id);
+    let response = reqwest::get(&url).await.expect("request failed");
+
+    assert_eq!(response.status(), reqwest::StatusCode::OK);
+
+    let body = response.text().await.expect("failed to read response body");
+
+    // Parse JSON
+    let json: Value = serde_json::from_str(&body).expect("response is not valid JSON");
+
+    // Pretty print
+    let pretty = serde_json::to_string_pretty(&json).unwrap();
+
+    println!("{}", pretty);
+}
