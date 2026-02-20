@@ -23,7 +23,7 @@ pub async fn start_server() {
 async fn wait_for_service(duration: Duration) {
     let timeout = Instant::now() + duration;
     loop {
-        let url = "http://127.0.0.1:8080/api/v1/health_check";
+        let url = "http://127.0.0.1:8080/";
         if let Ok(response) = reqwest::get(url).await
             && response.status() == StatusCode::OK
         {

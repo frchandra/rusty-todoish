@@ -10,7 +10,7 @@ async fn health_check_test() {
     // Start rest server
     test_server::start_server().await;
 
-    let url = "http://127.0.0.1:8080/api/v1/health_check";
+    let url = "http://127.0.0.1:8080";
     let response = reqwest::get(url).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -18,5 +18,5 @@ async fn health_check_test() {
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
     println!("Message log : {:#?}", json["message"]);
 
-    assert_eq!(json["message"], "/rest/v1");
+    assert_eq!(json["service_name"], "rusty-todoish");
 }
