@@ -5,7 +5,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS notes
 (
     id           UUID PRIMARY KEY      DEFAULT uuid_generate_v4(),
-    title        VARCHAR(255) NOT NULL UNIQUE,
+    title        VARCHAR(255) NOT NULL,
     content      TEXT         NOT NULL,
     is_published BOOLEAN      NOT NULL DEFAULT FALSE,
     created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
