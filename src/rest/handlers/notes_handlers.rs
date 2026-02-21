@@ -1,8 +1,8 @@
 use axum::{
-    Json,
     extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
+    Json,
 };
 
 use crate::app::services::notes_services;
@@ -10,7 +10,7 @@ use crate::{
     app::state::AppState,
     models::note::NoteModel,
     rest::schemas::note_schemas::{
-        /*CreateNoteSchema,*/ FilterOptions, /*UpdateNoteSchema,*/ NoteModelResponse,
+        CreateNoteSchema, FilterOptions, /*UpdateNoteSchema,*/ NoteModelResponse,
     },
 };
 
@@ -62,12 +62,30 @@ pub async fn get_note_handler(
     Ok(Json(serde_json::json!(note_response)))
 }
 
+pub async fn create_note_handler(
+    State(app_state): State<AppState>,
+    Json(body): Json<CreateNoteSchema>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    let note = notes_services::create_note(&app_state, &body.title, &body.content, body.is_published)
+        .await
+        .map_err(|e| {
+            let error_response = serde_json::json!({
+                "message": format!("{}", e),
+            });
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+        })?;
+
+    let note_response = to_note_response(&note);
+
+    Ok((StatusCode::OK, Json(serde_json::json!(note_response))))
+}
+
 fn to_note_response(note: &NoteModel) -> NoteModelResponse {
     NoteModelResponse {
         id: note.id.to_owned(),
         title: note.title.to_owned(),
         content: note.content.to_owned(),
-        is_published: note.is_published != 0,
+        is_published: note.is_published,
         created_at: note.created_at.unwrap(),
         updated_at: note.updated_at.unwrap(),
     }

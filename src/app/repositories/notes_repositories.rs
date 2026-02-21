@@ -32,3 +32,26 @@ pub async fn get_note_by_id(
 
     Ok(note)
 }
+
+pub async fn create_note(
+    app_state: &AppState,
+    title: &str,
+    content: &str,
+    is_published: bool,
+) -> Result<NoteModel, sqlx::Error> {
+    let note = sqlx::query_as!(
+        NoteModel,
+        r#"
+        INSERT INTO notes (title, content, is_published)
+        VALUES ($1, $2, $3)
+        RETURNING *
+        "#,
+        title,
+        content,
+        is_published
+    )
+    .fetch_one(&app_state.db_pool)
+    .await?;
+
+    Ok(note)
+}

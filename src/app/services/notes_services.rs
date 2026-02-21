@@ -23,3 +23,21 @@ pub async fn get_note_by_id(
         .map_err(AppError::from)?;
     Ok(note)
 }
+
+pub async fn create_note(
+    app_state: &AppState,
+    title: &str,
+    content: &str,
+    is_published: Option<bool>,
+) -> Result<NoteModel, AppError> {
+    let note = notes_repositories::create_note(
+        &app_state,
+        title,
+        content,
+        is_published.unwrap_or(false),
+    )
+    .await
+    .map_err(AppError::from)?;
+
+    Ok(note)
+}
