@@ -11,15 +11,15 @@ static ROOT_URL: LazyLock<String> = LazyLock::new(|| {
     format!("http://{}:{}", service_host, service_port)
 });
 
-#[tokio::test]
 //create a test function for populating notes table using dummy_factory
+#[tokio::test]
 async fn populate_notes_table_test() {
     // Populate notes table
     dummy_factory::populate_notes().await.unwrap();
 }
 
-#[tokio::test]
 //create a test function for clearing notes table using dummy_factory
+#[tokio::test]
 async fn clear_notes_table_test() {
     // Clear notes table
     dummy_factory::clear_notes().await.unwrap();
@@ -100,4 +100,48 @@ async fn get_note_by_id_test() {
     let pretty = serde_json::to_string_pretty(&json).unwrap();
 
     println!("{}", pretty);
+}
+
+#[tokio::test]
+#[serial]
+async fn create_note_test() {
+    test_server::start_server().await;
+
+    let url = format!("{}/notes", &*ROOT_URL);
+
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+
+    let randomized_title = format!("My new note {}", nonce);
+    let randomized_content = format!("Hello from integration test {}", nonce);
+    let randomized_is_published = nonce % 2 == 0;
+
+    let payload = serde_json::json!({
+        "title": randomized_title,
+        "content": randomized_content,
+        "is_published": randomized_is_published
+    });
+
+    let client = reqwest::Client::new();
+    let response = client
+        .post(&url)
+        .json(&payload)
+        .send()
+        .await
+        .expect("request failed");
+
+    assert_eq!(response.status(), reqwest::StatusCode::OK);
+
+    let body = response.text().await.expect("failed to read response body");
+    let json: Value = serde_json::from_str(&body).expect("response is not valid JSON");
+
+    let pretty = serde_json::to_string_pretty(&json).unwrap();
+    println!("{}", pretty);
+
+    assert_eq!(json["title"].as_str().unwrap(), randomized_title);
+    assert_eq!(json["content"].as_str().unwrap(), randomized_content);
+    assert_eq!(json["is_published"].as_bool().unwrap(), randomized_is_published);
+    assert!(json["id"].as_str().is_some());
 }

@@ -14,6 +14,6 @@ tokio = { version = "1.49.0", features = ["full"] }
 tower-http = { version = "0.6.8", features = ["cors"] }
 uuid = { version = "1.19.0", features = ["serde", "v4"] }
 config = "0.15.19"
-reqwest = "0.13.1"
+reqwest = { version = "0.13.1", features = ["json"] }
 serial_test = "3.3.1"
 tracing = "0.1.44"
