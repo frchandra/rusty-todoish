@@ -25,6 +25,7 @@ async fn clear_notes_table_test() {
     dummy_factory::clear_notes().await.unwrap();
 }
 
+use crate::common::dummy_factory::clear_notes;
 use serde_json::Value;
 
 #[tokio::test]
@@ -56,7 +57,6 @@ async fn list_notes_test() {
         println!("... (trimmed)");
     }
 }
-
 
 // Create a test unit for testing get one note by id endpoint /notes/{id}
 // here is the flow
@@ -105,6 +105,8 @@ async fn get_note_by_id_test() {
 #[tokio::test]
 #[serial]
 async fn create_note_test() {
+    clear_notes().await.expect("cannot clear notes table");
+
     test_server::start_server().await;
 
     let url = format!("{}/notes", &*ROOT_URL);
@@ -142,6 +144,9 @@ async fn create_note_test() {
 
     assert_eq!(json["title"].as_str().unwrap(), randomized_title);
     assert_eq!(json["content"].as_str().unwrap(), randomized_content);
-    assert_eq!(json["is_published"].as_bool().unwrap(), randomized_is_published);
+    assert_eq!(
+        json["is_published"].as_bool().unwrap(),
+        randomized_is_published
+    );
     assert!(json["id"].as_str().is_some());
 }
