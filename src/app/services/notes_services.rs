@@ -41,3 +41,23 @@ pub async fn create_note(
 
     Ok(note)
 }
+
+pub async fn update_note_by_id(
+    app_state: &AppState,
+    note_id: uuid::Uuid,
+    title: Option<String>,
+    content: Option<String>,
+    is_published: Option<bool>,
+) -> Result<NoteModel, AppError> {
+    let note = notes_repositories::update_note_by_id(
+        &app_state,
+        note_id,
+        title,
+        content,
+        is_published,
+    )
+    .await
+    .map_err(AppError::from)?;
+
+    Ok(note)
+}

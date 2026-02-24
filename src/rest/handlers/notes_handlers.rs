@@ -5,12 +5,13 @@ use axum::{
     Json,
 };
 
+use crate::app::errors::AppErrorCode;
 use crate::app::services::notes_services;
 use crate::{
     app::state::AppState,
     models::note::NoteModel,
     rest::schemas::note_schemas::{
-        CreateNoteSchema, FilterOptions, /*UpdateNoteSchema,*/ NoteModelResponse,
+        CreateNoteSchema, FilterOptions, NoteModelResponse, UpdateNoteSchema,
     },
 };
 
@@ -78,6 +79,33 @@ pub async fn create_note_handler(
     let note_response = to_note_response(&note);
 
     Ok((StatusCode::OK, Json(serde_json::json!(note_response))))
+}
+
+pub async fn update_note_handler(
+    Path(note_id): Path<uuid::Uuid>,
+    State(app_state): State<AppState>,
+    Json(body): Json<UpdateNoteSchema>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    notes_services::update_note_by_id(
+        &app_state,
+        note_id,
+        body.title,
+        body.content,
+        body.is_published,
+    )
+    .await
+    .map_err(|e| {
+        let status_code = match e.error_code {
+            AppErrorCode::ResourceNotFound => StatusCode::NOT_FOUND,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        let error_response = serde_json::json!({
+            "message": format!("{}", e),
+        });
+        (status_code, Json(error_response))
+    })?;
+
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn to_note_response(note: &NoteModel) -> NoteModelResponse {

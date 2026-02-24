@@ -55,3 +55,31 @@ pub async fn create_note(
 
     Ok(note)
 }
+
+pub async fn update_note_by_id(
+    app_state: &AppState,
+    note_id: uuid::Uuid,
+    title: Option<String>,
+    content: Option<String>,
+    is_published: Option<bool>,
+) -> Result<NoteModel, sqlx::Error> {
+    let note = sqlx::query_as!(
+        NoteModel,
+        r#"
+        UPDATE notes
+        SET title = COALESCE($2, title),
+            content = COALESCE($3, content),
+            is_published = COALESCE($4, is_published)
+        WHERE id = $1::uuid
+        RETURNING *
+        "#,
+        note_id,
+        title,
+        content,
+        is_published
+    )
+    .fetch_one(&app_state.db_pool)
+    .await?;
+
+    Ok(note)
+}
