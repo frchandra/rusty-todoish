@@ -150,3 +150,81 @@ async fn create_note_test() {
     );
     assert!(json["id"].as_str().is_some());
 }
+
+#[tokio::test]
+#[serial]
+async fn update_note_by_id_test() {
+    clear_notes().await.expect("cannot clear notes table");
+
+    test_server::start_server().await;
+
+    let url = format!("{}/notes", &*ROOT_URL);
+
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+
+    let original_title = format!("Original title {}", nonce);
+    let original_content = format!("Original content {}", nonce);
+
+    let create_payload = serde_json::json!({
+        "title": original_title,
+        "content": original_content,
+        "is_published": false
+    });
+
+    let client = reqwest::Client::new();
+    let create_response = client
+        .post(&url)
+        .json(&create_payload)
+        .send()
+        .await
+        .expect("request failed");
+
+    assert_eq!(create_response.status(), reqwest::StatusCode::OK);
+
+    let create_body = create_response
+        .text()
+        .await
+        .expect("failed to read response body");
+    let create_json: Value = serde_json::from_str(&create_body).expect("response is not valid JSON");
+
+    let note_id = create_json["id"].as_str().expect("missing note id");
+
+    let updated_title = format!("Updated title {}", nonce);
+    let updated_content = format!("Updated content {}", nonce);
+
+    let update_payload = serde_json::json!({
+        "title": updated_title,
+        "content": updated_content,
+        "is_published": true
+    });
+
+    let update_url = format!("{}/notes/{}", &*ROOT_URL, note_id);
+    let update_response = client
+        .put(&update_url)
+        .json(&update_payload)
+        .send()
+        .await
+        .expect("request failed");
+
+    assert_eq!(update_response.status(), reqwest::StatusCode::NO_CONTENT);
+
+    let get_response = reqwest::get(&update_url).await.expect("request failed");
+
+    assert_eq!(get_response.status(), reqwest::StatusCode::OK);
+
+    let get_body = get_response
+        .text()
+        .await
+        .expect("failed to read response body");
+    let get_json: Value = serde_json::from_str(&get_body).expect("response is not valid JSON");
+
+    assert_eq!(get_json["title"].as_str().unwrap(), updated_title);
+    assert_eq!(get_json["content"].as_str().unwrap(), updated_content);
+    assert!(get_json["is_published"].as_bool().unwrap());
+
+    assert_ne!(get_json["title"].as_str().unwrap(), original_title);
+    assert_ne!(get_json["content"].as_str().unwrap(), original_content);
+}
