@@ -228,3 +228,76 @@ async fn update_note_by_id_test() {
     assert_ne!(get_json["title"].as_str().unwrap(), original_title);
     assert_ne!(get_json["content"].as_str().unwrap(), original_content);
 }
+
+#[tokio::test]
+#[serial]
+async fn delete_note_by_id_test() {
+    clear_notes().await.expect("cannot clear notes table");
+
+    test_server::start_server().await;
+
+    let url = format!("{}/notes", &*ROOT_URL);
+
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+
+    let create_payload = serde_json::json!({
+        "title": format!("Delete me {}", nonce),
+        "content": format!("Delete test {}", nonce),
+        "is_published": false
+    });
+
+    let client = reqwest::Client::new();
+    let create_response = client
+        .post(&url)
+        .json(&create_payload)
+        .send()
+        .await
+        .expect("request failed");
+
+    assert_eq!(create_response.status(), reqwest::StatusCode::OK);
+
+    let create_body = create_response
+        .text()
+        .await
+        .expect("failed to read response body");
+    let create_json: Value = serde_json::from_str(&create_body).expect("response is not valid JSON");
+
+    let note_id = create_json["id"].as_str().expect("missing note id");
+
+    let delete_url = format!("{}/notes/{}", &*ROOT_URL, note_id);
+    let delete_response = client
+        .delete(&delete_url)
+        .send()
+        .await
+        .expect("request failed");
+
+    assert_eq!(delete_response.status(), reqwest::StatusCode::NO_CONTENT);
+
+    let second_delete = client
+        .delete(&delete_url)
+        .send()
+        .await
+        .expect("request failed");
+
+    assert_eq!(second_delete.status(), reqwest::StatusCode::NOT_FOUND);
+
+    let list_response = reqwest::get(&url).await.expect("request failed");
+    assert_eq!(list_response.status(), reqwest::StatusCode::OK);
+
+    let list_body = list_response
+        .text()
+        .await
+        .expect("failed to read response body");
+    let list_json: Value = serde_json::from_str(&list_body).expect("response is not valid JSON");
+
+    let contains_deleted = list_json
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|note| note["id"].as_str() == Some(note_id));
+
+    assert!(!contains_deleted);
+}
