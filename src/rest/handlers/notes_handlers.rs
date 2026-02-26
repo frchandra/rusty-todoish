@@ -108,6 +108,26 @@ pub async fn update_note_handler(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn delete_note_handler(
+    Path(note_id): Path<uuid::Uuid>,
+    State(app_state): State<AppState>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    notes_services::delete_note_by_id(&app_state, note_id)
+        .await
+        .map_err(|e| {
+            let status_code = match e.error_code {
+                AppErrorCode::ResourceNotFound => StatusCode::NOT_FOUND,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            };
+            let error_response = serde_json::json!({
+                "message": format!("{}", e),
+            });
+            (status_code, Json(error_response))
+        })?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
 fn to_note_response(note: &NoteModel) -> NoteModelResponse {
     NoteModelResponse {
         id: note.id.to_owned(),

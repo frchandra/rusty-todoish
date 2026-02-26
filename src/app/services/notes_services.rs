@@ -1,4 +1,4 @@
-use crate::app::errors::AppError;
+use crate::app::errors::{AppError, AppErrorCode, ErrorEntry};
 use crate::app::repositories::notes_repositories;
 use crate::app::state::AppState;
 use crate::models::note::NoteModel;
@@ -60,4 +60,22 @@ pub async fn update_note_by_id(
     .map_err(AppError::from)?;
 
     Ok(note)
+}
+
+pub async fn delete_note_by_id(
+    app_state: &AppState,
+    note_id: uuid::Uuid,
+) -> Result<(), AppError> {
+    let rows_affected = notes_repositories::delete_note_by_id(&app_state, note_id)
+        .await
+        .map_err(AppError::from)?;
+
+    if rows_affected == 0 {
+        return Err(AppError::new(
+            AppErrorCode::ResourceNotFound,
+            ErrorEntry::new("note not found"),
+        ));
+    }
+
+    Ok(())
 }

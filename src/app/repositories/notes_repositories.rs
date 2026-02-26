@@ -83,3 +83,20 @@ pub async fn update_note_by_id(
 
     Ok(note)
 }
+
+pub async fn delete_note_by_id(
+    app_state: &AppState,
+    note_id: uuid::Uuid,
+) -> Result<u64, sqlx::Error> {
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM notes
+        WHERE id = $1::uuid
+        "#,
+        note_id
+    )
+    .execute(&app_state.db_pool)
+    .await?;
+
+    Ok(result.rows_affected())
+}
