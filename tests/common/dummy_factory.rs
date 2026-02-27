@@ -34,3 +34,24 @@ pub async fn clear_notes() -> Result<(), sqlx::Error> {
 
     Ok(())
 }
+
+// this functions is to populate and clear the users table
+pub async fn populate_users() -> Result<(), sqlx::Error> {
+    let pool = PgPool::connect(&DATABASE_URL).await?;
+
+    let sql = include_str!("../sql/populate_users_table.sql");
+
+    sqlx::query(sql).execute(&pool).await?;
+
+    Ok(())
+}
+
+pub async fn clear_users() -> Result<(), sqlx::Error> {
+    let pool = PgPool::connect(&DATABASE_URL).await?;
+
+    let sql = include_str!("../sql/clear_users_table.sql");
+
+    sqlx::query(sql).execute(&pool).await?;
+
+    Ok(())
+}
