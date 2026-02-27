@@ -16,6 +16,13 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE INDEX IF NOT EXISTS idx_users_id_hash
     ON users USING HASH (id);
 
+CREATE INDEX IF NOT EXISTS idx_users_name_hash
+    ON users USING HASH (name);
+
+CREATE INDEX IF NOT EXISTS idx_users_email_hash
+    ON users USING HASH (email);
+
+
 -- Trigger
 DROP TRIGGER IF EXISTS trg_set_updated_at ON users;
 
