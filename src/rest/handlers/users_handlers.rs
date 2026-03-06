@@ -15,7 +15,7 @@ pub async fn login_handler(
 	State(app_state): State<AppState>,
 	Json(body): Json<LoginUserSchema>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-	let user = users_services::login(&app_state, &body.name, &body.password)
+	let user = users_services::login(&app_state, &body.email, &body.password)
 		.await
 		.map_err(|e| {
 			let status_code = match e.error_code {

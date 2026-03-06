@@ -36,7 +36,7 @@ async fn login_user_test() {
     let url = format!("{}/user/login", &*ROOT_URL);
 
     let payload = serde_json::json!({
-        "name": "admin_user",
+        "email": "admin@example.com",
         "password": "admin_password"
     });
 

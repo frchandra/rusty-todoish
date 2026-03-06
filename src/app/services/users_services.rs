@@ -5,10 +5,10 @@ use crate::models::user::UserModel;
 
 pub async fn login(
 	app_state: &AppState,
-	name: &str,
+	email: &str,
 	password: &str,
 ) -> Result<UserModel, AppError> {
-	let user = users_repositories::get_user_by_name_and_password(app_state, name, password)
+	let user = users_repositories::get_user_by_email_and_password(app_state, email, password)
 		.await
 		.map_err(|err| match err {
 			sqlx::Error::RowNotFound => AppError::new(

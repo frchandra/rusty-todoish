@@ -12,6 +12,6 @@ pub struct UserModelResponse {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LoginUserSchema {
-    pub name: String,
+    pub email: String,
     pub password: String,
 }
