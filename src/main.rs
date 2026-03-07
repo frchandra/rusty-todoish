@@ -14,5 +14,3 @@ async fn main() {
         .await
         .expect("Failed to run the server");
 }
-
-// TODO: get one user by id and implement error not found
