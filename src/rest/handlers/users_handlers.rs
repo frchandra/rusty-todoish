@@ -4,12 +4,14 @@ use axum::{
 	response::IntoResponse,
 	Json,
 };
-
+use serde_json::json;
 use crate::app::errors::AppErrorCode;
 use crate::app::services::users_services;
 use crate::app::state::AppState;
 use crate::models::user::UserModel;
 use crate::rest::schemas::user_schemas::{LoginUserSchema, UserModelResponse};
+use crate::rest::sessions::auth_utils;
+use crate::rest::sessions::auth_utils::AuthTokens;
 
 pub async fn login_handler(
 	State(app_state): State<AppState>,
@@ -28,16 +30,17 @@ pub async fn login_handler(
 			(status_code, Json(error_response))
 		})?;
 
-	let user_response = to_user_response(&user);
+    let tokens =  auth_utils::generate_tokens(user, &app_state.app_config);
 
-	Ok((StatusCode::OK, Json(serde_json::json!(user_response))))
+	Ok((StatusCode::OK, tokens_to_response(tokens)))
 }
 
-fn to_user_response(user: &UserModel) -> UserModelResponse {
-	UserModelResponse {
-		id: user.id,
-		name: user.name.to_owned(),
-		email: user.email.to_owned(),
-		is_admin: user.is_admin,
-	}
+fn tokens_to_response(jwt_tokens: AuthTokens) -> impl IntoResponse {
+    let json = json!({
+        "access_token": jwt_tokens.access_token,
+        "refresh_token": jwt_tokens.refresh_token,
+        "token_type": "Bearer"
+    });
+
+    Json(json)
 }
