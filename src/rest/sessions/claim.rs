@@ -1,10 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::application::{
-    config::Config,
-    // security::{auth::AuthError, roles},
-};
-
 // [JWT Claims]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AccessClaims {
@@ -18,8 +13,8 @@ pub struct AccessClaims {
     pub exp: usize,
     /// Token type.
     pub typ: u8,
-    /// Roles.
-    pub roles: String,
+    /// is_admin.
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,8 +33,8 @@ pub struct RefreshClaims {
     pub pex: usize,
     /// Token type.
     pub typ: u8,
-    /// Roles.
-    pub roles: String,
+    /// is_admin.
+    pub is_admin: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
