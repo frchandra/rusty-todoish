@@ -1,9 +1,9 @@
 pub mod common;
 
-use common::dummy_factory;
 use crate::common::test_server;
-use serial_test::serial;
+use common::dummy_factory;
 use serde_json::Value;
+use serial_test::serial;
 use std::{env, sync::LazyLock};
 
 static ROOT_URL: LazyLock<String> = LazyLock::new(|| {
@@ -56,4 +56,3 @@ async fn login_user_test() {
     let pretty = serde_json::to_string_pretty(&json).unwrap();
     println!("{}", pretty);
 }
-
