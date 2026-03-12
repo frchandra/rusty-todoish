@@ -13,8 +13,8 @@ pub struct AccessClaims {
     pub exp: usize,
     /// Token type.
     pub typ: u8,
-    /// is_admin.
-    pub is_admin: bool,
+    /// Role.
+    pub role: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -33,8 +33,8 @@ pub struct RefreshClaims {
     pub pex: usize,
     /// Token type.
     pub typ: u8,
-    /// is_admin.
-    pub is_admin: bool,
+    /// Role.
+    pub role: String,
 }
 
 #[derive(Debug, Clone, Copy)]

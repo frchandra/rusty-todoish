@@ -7,7 +7,7 @@ pub struct UserModelResponse {
     pub id: uuid::Uuid,
     pub name: String,
     pub email: String,
-    pub is_admin: bool,
+    pub role: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

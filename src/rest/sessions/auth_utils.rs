@@ -25,7 +25,7 @@ pub fn generate_tokens(user: UserModel, config: &AppConfig) -> AuthTokens {
         iat,
         exp: access_token_exp,
         typ: JwtTokenType::AccessToken as u8,
-        is_admin: user.is_admin.clone(),
+        role: user.role.clone(),
     };
 
     let refresh_claims = RefreshClaims {
@@ -37,7 +37,7 @@ pub fn generate_tokens(user: UserModel, config: &AppConfig) -> AuthTokens {
         prf: access_token_id,
         pex: access_token_exp,
         typ: JwtTokenType::RefreshToken as u8,
-        is_admin: user.is_admin,
+        role: user.role,
     };
 
 
@@ -59,4 +59,14 @@ pub fn generate_tokens(user: UserModel, config: &AppConfig) -> AuthTokens {
         access_token,
         refresh_token,
     }
+}
+
+
+pub enum AuthError {
+    WrongCredentials,
+    MissingCredentials,
+    TokenCreationError,
+    InvalidToken,
+    RevokedTokensInactive,
+    Forbidden,
 }

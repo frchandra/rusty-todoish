@@ -8,7 +8,7 @@ pub struct UserModel {
     pub name: String,
     pub email: String,
     pub password: String,
-    pub is_admin: bool,
+    pub role: String,
     pub created_at: Option<chrono::DateTime<chrono::Utc>>,
     pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
