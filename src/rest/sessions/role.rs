@@ -1,6 +1,6 @@
 use std::fmt::Display;
-use crate::rest::sessions::auth_utils::AuthError;
-use crate::app::constant::*;
+// use crate::rest::sessions::auth_utils::AuthError;
+use crate::app::{constant::*, errors::*};
 
 pub enum UserRole {
     Admin,
@@ -40,9 +40,12 @@ pub fn contains_role_admin(roles: &str) -> bool {
     roles.split(',').map(|s| s.trim()).any(|x| x == role_admin)
 }
 
-pub fn is_role_admin(roles: &str) -> Result<(), AuthError> {
+pub fn is_role_admin(roles: &str) -> Result<(), AppError> {
     if !contains_role_admin(roles) {
-        return Err(AuthError::Forbidden);
+        return Err(AppError::new(
+            AppErrorCode::AuthenticationForbidden,
+            crate::app::errors::ErrorEntry::new("User does not have admin role"),
+        ));
     }
     Ok(())
 }

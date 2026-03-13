@@ -60,13 +60,3 @@ pub fn generate_tokens(user: UserModel, config: &AppConfig) -> AuthTokens {
         refresh_token,
     }
 }
-
-
-pub enum AuthError {
-    WrongCredentials,
-    MissingCredentials,
-    TokenCreationError,
-    InvalidToken,
-    RevokedTokensInactive,
-    Forbidden,
-}
