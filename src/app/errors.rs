@@ -104,27 +104,3 @@ impl ErrorEntry {
         self
     }
 }
-
-// impl From<sqlx::Error> for ErrorEntry {
-//     fn from(e: sqlx::Error) -> Self {
-//         // Do not disclose database-related internal specifics, except for debug builds.
-//         /*        if cfg!(debug_assertions) {
-//             let (code, kind) = match e {
-//                 sqlx::Error::RowNotFound => (
-//                     APIErrorCode::ResourceNotFound,
-//                     APIErrorKind::ResourceNotFound,
-//                 ),
-//                 _ => (APIErrorCode::DatabaseError, APIErrorKind::DatabaseError),
-//             };
-//             Self::new(&e.to_string()).code(code).kind(kind).trace_id()
-//         } else {
-//             // Build the entry with a trace id to find the exact error in the log when needed.
-//             let error_entry = Self::from(StatusCode::INTERNAL_SERVER_ERROR).trace_id();
-//             let trace_id = error_entry.trace_id.as_deref().unwrap_or("");
-//             // The error must be logged here. Otherwise, we would lose it.
-//             tracing::error!("SQLx error: {}, trace id: {}", e.to_string(), trace_id);
-//             error_entry
-//         }*/
-//         Self::new(&e.to_string()).trace_id()
-//     }
-// }
