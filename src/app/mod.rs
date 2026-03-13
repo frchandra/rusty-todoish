@@ -4,3 +4,4 @@ pub mod state;
 pub mod repositories;
 pub mod services;
 pub mod errors;
+pub mod constant;
