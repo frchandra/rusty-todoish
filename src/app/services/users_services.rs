@@ -1,4 +1,4 @@
-use crate::app::errors::{AppError, AppErrorCode, ErrorEntry};
+use crate::app::errors::{AppError, AppErrorCode};
 use crate::app::repositories::users_repositories;
 use crate::app::state::AppState;
 use crate::models::user::UserModel;
@@ -13,7 +13,7 @@ pub async fn login(
 		.map_err(|err| match err {
 			sqlx::Error::RowNotFound => AppError::new(
 				AppErrorCode::AuthenticationWrongCredentials,
-				ErrorEntry::new("wrong credentials"),
+				"wrong credentials",
 			),
 			_ => AppError::from(err),
 		})?;

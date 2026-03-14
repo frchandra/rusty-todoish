@@ -121,7 +121,7 @@ pub fn decode_token<T: for<'de> serde::Deserialize<'de>>(
             tracing::error!("Invalid token: {}", token);
             AppError::new(
                 AppErrorCode::AuthenticationWrongCredentials,
-                ErrorEntry::new("Invalid token"),
+                "Invalid token",
             )
         })?;
 

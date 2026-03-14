@@ -1,5 +1,5 @@
 use crate::app::config::AppConfig;
-use crate::app::errors::{AppError, AppErrorCode, ErrorEntry};
+use crate::app::errors::{AppError, AppErrorCode};
 use crate::app::state::AppState;
 use crate::models::user::UserModel;
 use crate::rest::sessions::claim::{AccessClaims, Claimable, JwtTokenType, RefreshClaims};
@@ -71,7 +71,7 @@ pub async fn validate_revoked<T: std::fmt::Debug + Claimable + Sync + Send>(
     if revoked {
         Err(AppError::new(
             AppErrorCode::ApiVersionError,
-            ErrorEntry::new("Token has been revoked"),
+            "Token has been revoked",
         ))?;
     }
     Ok(())

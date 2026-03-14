@@ -1,4 +1,4 @@
-use crate::app::errors::{AppError, AppErrorCode, ErrorEntry};
+use crate::app::errors::{AppError, AppErrorCode};
 use crate::app::repositories::notes_repositories;
 use crate::app::state::AppState;
 use crate::models::note::NoteModel;
@@ -73,7 +73,7 @@ pub async fn delete_note_by_id(
     if rows_affected == 0 {
         return Err(AppError::new(
             AppErrorCode::ResourceNotFound,
-            ErrorEntry::new("note not found"),
+            "note not found",
         ));
     }
 

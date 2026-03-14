@@ -1,45 +1,34 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter, Result};
 
+use crate::app::constant::*;
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
-use crate::app::constant::*;
 
 pub struct AppError {
     pub error_code: AppErrorCode,
-    pub error_details: Vec<ErrorEntry>,
+    pub error_details: String,
 }
 
 impl AppError {
-    pub fn new(app_error_code: AppErrorCode, error_details: ErrorEntry) -> Self {
+    pub fn new(app_error_code: AppErrorCode, error_details: impl Into<String>) -> Self {
         Self {
-            error_code: app_error_code, // Default code, can be overridden later.
-            error_details: vec![error_details],
+            error_code: app_error_code,
+            error_details: error_details.into(),
         }
     }
 }
+
 impl From<sqlx::Error> for AppError {
     fn from(e: sqlx::Error) -> Self {
-        // Do not disclose database-related internal specifics, except for debug builds.
-        if cfg!(debug_assertions) {
-            let error_code = match e {
-                sqlx::Error::RowNotFound => AppErrorCode::ResourceNotFound,
-                _ => AppErrorCode::InternalServerError,
-            };
-            Self::new(error_code, ErrorEntry::new(&e.to_string()))
-        } else {
-            // Build the entry with a trace id to find the exact error in the log when needed.
-            let error_code = AppErrorCode::DatabaseError;
-            let error_entry = ErrorEntry::new(&e.to_string()).trace_id();
-            let trace_id = error_entry.trace_id.as_deref().unwrap_or("");
-            // The error must be logged here. Otherwise, we would lose it.
-            tracing::error!("SQLx error: {}, trace id: {}", e.to_string(), trace_id);
-            Self::new(error_code, error_entry)
-        }
+        let error_code = match e {
+            sqlx::Error::RowNotFound => AppErrorCode::ResourceNotFound,
+            _ => AppErrorCode::InternalServerError,
+        };
+        Self::new(error_code, e.to_string())
     }
 }
 
@@ -48,7 +37,7 @@ impl Display for AppError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
-            "AppError: {:?}, Errors: {:?}",
+            "AppError: {:?}, Details: {}",
             self.error_code, self.error_details
         )
     }
@@ -65,7 +54,6 @@ impl IntoResponse for AppError {
         (status_code, Json(body)).into_response()
     }
 }
-
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -103,7 +91,9 @@ impl AppErrorCode {
             AppErrorCode::TransactionNotFound => E_TRANSACTION_NOT_FOUND,
             AppErrorCode::TransferInsufficientFunds => E_TRANSFER_INSUFFICIENT_FUNDS,
             AppErrorCode::TransferSourceAccountNotFound => E_TRANSFER_SOURCE_ACCOUNT_NOT_FOUND,
-            AppErrorCode::TransferDestinationAccountNotFound => E_TRANSFER_DESTINATION_ACCOUNT_NOT_FOUND,
+            AppErrorCode::TransferDestinationAccountNotFound => {
+                E_TRANSFER_DESTINATION_ACCOUNT_NOT_FOUND
+            }
             AppErrorCode::TransferAccountsAreSame => E_TRANSFER_ACCOUNTS_ARE_SAME,
             AppErrorCode::ResourceNotFound => E_RESOURCE_NOT_FOUND,
             AppErrorCode::ApiVersionError => E_API_VERSION_ERROR,
@@ -124,41 +114,5 @@ impl AppErrorCode {
             503 => StatusCode::SERVICE_UNAVAILABLE,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
-    }
-}
-
-impl Display for AppErrorCode {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(
-            f,
-            "{}",
-            serde_json::json!(self).as_str().unwrap_or_default()
-        )
-    }
-}
-
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
-pub struct ErrorEntry {
-    pub message: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trace_id: Option<String>,
-    pub timestamp: DateTime<Utc>,
-}
-
-impl ErrorEntry {
-    pub fn new(message: &str) -> Self {
-        Self {
-            message: message.to_owned(),
-            timestamp: Utc::now(),
-            ..Default::default()
-        }
-    }
-
-    pub fn trace_id(mut self) -> Self {
-        // Generate a new trace id.
-        let mut trace_id = uuid::Uuid::new_v4().to_string();
-        trace_id.retain(|c| c != '-');
-        self.trace_id = Some(trace_id);
-        self
     }
 }

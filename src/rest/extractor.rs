@@ -54,7 +54,7 @@ where
             println!("Invalid authorization header");
             AppError::new(
                 AppErrorCode::AuthenticationMissingCredentials,
-                ErrorEntry::new("Invalid authorization header"),
+                "Invalid authorization header",
             )
         })?;
 

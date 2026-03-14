@@ -44,7 +44,7 @@ pub fn is_role_admin(roles: &str) -> Result<(), AppError> {
     if !contains_role_admin(roles) {
         return Err(AppError::new(
             AppErrorCode::AuthenticationForbidden,
-            crate::app::errors::ErrorEntry::new("User does not have admin role"),
+            "User does not have admin role",
         ));
     }
     Ok(())
