@@ -7,6 +7,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use crate::app::constant::*;
 
 pub struct AppError {
     pub error_code: AppErrorCode,
@@ -81,6 +82,30 @@ pub enum AppErrorCode {
     ApiVersionError,
     DatabaseError,
     RedisError,
+}
+
+impl AppErrorCode {
+    pub const fn numeric_code(self) -> u32 {
+        match self {
+            AppErrorCode::InternalServerError => E_INTERNAL_SERVER_ERROR,
+            AppErrorCode::AuthenticationWrongCredentials => E_AUTH_WRONG_CREDENTIALS,
+            AppErrorCode::AuthenticationMissingCredentials => E_AUTH_MISSING_CREDENTIALS,
+            AppErrorCode::AuthenticationTokenCreationError => E_AUTH_TOKEN_CREATION_ERROR,
+            AppErrorCode::AuthenticationInvalidToken => E_AUTH_INVALID_TOKEN,
+            AppErrorCode::AuthenticationRevokedTokensInactive => E_AUTH_REVOKED_TOKENS_INACTIVE,
+            AppErrorCode::AuthenticationForbidden => E_AUTH_FORBIDDEN,
+            AppErrorCode::UserNotFound => E_USER_NOT_FOUND,
+            AppErrorCode::TransactionNotFound => E_TRANSACTION_NOT_FOUND,
+            AppErrorCode::TransferInsufficientFunds => E_TRANSFER_INSUFFICIENT_FUNDS,
+            AppErrorCode::TransferSourceAccountNotFound => E_TRANSFER_SOURCE_ACCOUNT_NOT_FOUND,
+            AppErrorCode::TransferDestinationAccountNotFound => E_TRANSFER_DESTINATION_ACCOUNT_NOT_FOUND,
+            AppErrorCode::TransferAccountsAreSame => E_TRANSFER_ACCOUNTS_ARE_SAME,
+            AppErrorCode::ResourceNotFound => E_RESOURCE_NOT_FOUND,
+            AppErrorCode::ApiVersionError => E_API_VERSION_ERROR,
+            AppErrorCode::DatabaseError => E_DATABASE_ERROR,
+            AppErrorCode::RedisError => E_REDIS_ERROR,
+        }
+    }
 }
 
 impl Display for AppErrorCode {
