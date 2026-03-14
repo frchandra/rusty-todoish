@@ -1,4 +1,5 @@
 pub mod handlers;
 pub mod routes;
-mod schemas;
-mod sessions;
+pub mod schemas;
+pub mod sessions;
+pub mod extractor;
