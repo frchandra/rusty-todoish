@@ -1,12 +1,15 @@
 use axum::{
+    Json,
     extract::{Path, Query, State},
     http::StatusCode,
     response::IntoResponse,
-    Json,
 };
 
-use crate::{app::errors::{AppError, AppErrorCode}, rest::sessions::claim::{AccessClaims, Claimable}};
 use crate::app::services::notes_services;
+use crate::{
+    app::errors::{AppError, AppErrorCode},
+    rest::sessions::claim::{AccessClaims, Claimable},
+};
 use crate::{
     app::state::AppState,
     models::note::NoteModel,
@@ -16,20 +19,19 @@ use crate::{
 };
 
 pub async fn note_list_handler(
-    
-    // access_claims: AccessClaims,
+    access_claims: AccessClaims,
     Query(opts): Query<FilterOptions>,
     State(app_state): State<AppState>,
-    
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    // access_claims.validate_role_admin().map_err(|e| {
-    //     let error_response = serde_json::json!({
-    //         "status": "error",
-    //         "message": "Unauthorized",
-    //     });
-    //     (StatusCode::UNAUTHORIZED, Json(error_response))
-    // });
+    access_claims.validate_role_admin().map_err(|e| {
+        let error_response = serde_json::json!({
+            "status": "error",
+            "message": "Unauthorized",
+        });
+        (StatusCode::UNAUTHORIZED, Json(error_response))
+    })?;
     // Param
+
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
 
@@ -77,14 +79,15 @@ pub async fn create_note_handler(
     State(app_state): State<AppState>,
     Json(body): Json<CreateNoteSchema>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    let note = notes_services::create_note(&app_state, &body.title, &body.content, body.is_published)
-        .await
-        .map_err(|e| {
-            let error_response = serde_json::json!({
-                "message": format!("{}", e),
-            });
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
-        })?;
+    let note =
+        notes_services::create_note(&app_state, &body.title, &body.content, body.is_published)
+            .await
+            .map_err(|e| {
+                let error_response = serde_json::json!({
+                    "message": format!("{}", e),
+                });
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+            })?;
 
     let note_response = to_note_response(&note);
 

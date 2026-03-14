@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter, Result};
 
 use axum::{
-    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
+    Json,
 };
 use crate::app::constant::*;
 
@@ -56,8 +56,13 @@ impl Display for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let status_code = StatusCode::UNAUTHORIZED;;
-        status_code.into_response()
+        let status_code = self.error_code.http_status();
+        let body = serde_json::json!({
+            "code": self.error_code.numeric_code(),
+            "error": self.error_code, // serialized as snake_case
+            "details": self.error_details,
+        });
+        (status_code, Json(body)).into_response()
     }
 }
 
@@ -85,7 +90,7 @@ pub enum AppErrorCode {
 }
 
 impl AppErrorCode {
-    pub const fn numeric_code(self) -> u32 {
+    pub const fn numeric_code(self) -> u16 {
         match self {
             AppErrorCode::InternalServerError => E_INTERNAL_SERVER_ERROR,
             AppErrorCode::AuthenticationWrongCredentials => E_AUTH_WRONG_CREDENTIALS,
@@ -104,6 +109,20 @@ impl AppErrorCode {
             AppErrorCode::ApiVersionError => E_API_VERSION_ERROR,
             AppErrorCode::DatabaseError => E_DATABASE_ERROR,
             AppErrorCode::RedisError => E_REDIS_ERROR,
+        }
+    }
+
+    pub const fn http_status(self) -> StatusCode {
+        match self.numeric_code() {
+            400 => StatusCode::BAD_REQUEST,
+            401 => StatusCode::UNAUTHORIZED,
+            403 => StatusCode::FORBIDDEN,
+            404 => StatusCode::NOT_FOUND,
+            409 => StatusCode::CONFLICT,
+            422 => StatusCode::UNPROCESSABLE_ENTITY,
+            500 => StatusCode::INTERNAL_SERVER_ERROR,
+            503 => StatusCode::SERVICE_UNAVAILABLE,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

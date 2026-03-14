@@ -11,10 +11,10 @@ use axum_extra::{
     headers::{Authorization, authorization::Bearer},
 };
 
-use crate::rest::sessions::claim::{decode_token, AccessClaims, Claimable, RefreshClaims};
-use crate::app::state::AppState;
 use crate::app::errors::*;
+use crate::app::state::AppState;
 use crate::rest::sessions::auth_utils;
+use crate::rest::sessions::claim::{AccessClaims, Claimable, RefreshClaims, decode_token};
 
 impl<S> FromRequestParts<S> for AccessClaims
 where
@@ -51,8 +51,11 @@ where
         .extract::<TypedHeader<Authorization<Bearer>>>()
         .await
         .map_err(|_| {
-            tracing::error!("Invalid authorization header");
-            AppError::new(AppErrorCode::AuthenticationWrongCredentials, ErrorEntry::new("Invalid authorization header"))
+            println!("Invalid authorization header");
+            AppError::new(
+                AppErrorCode::AuthenticationMissingCredentials,
+                ErrorEntry::new("Invalid authorization header"),
+            )
         })?;
 
     // Take the state from a reference.
