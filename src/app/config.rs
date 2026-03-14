@@ -1,4 +1,29 @@
 use std::env;
+use std::fmt;
+use jsonwebtoken::{DecodingKey, EncodingKey};
+
+#[derive(Clone)]
+pub struct JwtKeys {
+    pub encoding: EncodingKey,
+    pub decoding: DecodingKey,
+}
+
+// A blank impl fmt::Debug for JwtKeys
+// there is no debug(skip) option for #[derive(Debug)] currently in Rust 1.74
+impl fmt::Debug for JwtKeys {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("JwtKeys").finish()
+    }
+}
+
+impl JwtKeys {
+    fn new(secret: &[u8]) -> Self {
+        Self {
+            encoding: EncodingKey::from_secret(secret),
+            decoding: DecodingKey::from_secret(secret),
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct AppConfig {
@@ -10,6 +35,7 @@ pub struct AppConfig {
 
     // jwt configuration
     pub jwt_secret: String,
+    pub jwt_keys: JwtKeys,
     pub jwt_expire_access_token_seconds: i64,
     pub jwt_expire_refresh_token_seconds: i64,
     pub jwt_validation_leeway_seconds: i64,
@@ -49,6 +75,7 @@ impl AppConfig {
 
         // jwt configuration
         let jwt_secret = env::var("JWT_SECRET").expect("JWT_SECRET missing");
+        let jwt_keys = JwtKeys::new(jwt_secret.as_bytes());
         let jwt_expire_access_token_seconds = env::var("JWT_EXPIRE_ACCESS_TOKEN_SECONDS")
             .unwrap_or_else(|_| "3600".to_string())
             .parse::<i64>()
@@ -72,6 +99,7 @@ impl AppConfig {
             database_url,
             redis_url,
             service_url,
+            jwt_keys,
             jwt_secret,
             jwt_expire_access_token_seconds,
             jwt_expire_refresh_token_seconds,
