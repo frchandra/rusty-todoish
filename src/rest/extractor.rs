@@ -11,9 +11,10 @@ use axum_extra::{
     headers::{Authorization, authorization::Bearer},
 };
 
-use crate::rest::sessions::claim::{AccessClaims, RefreshClaims};
+use crate::rest::sessions::claim::{decode_token, AccessClaims, Claimable, RefreshClaims};
 use crate::app::state::AppState;
 use crate::app::errors::*;
+use crate::rest::sessions::auth_utils;
 
 impl<S> FromRequestParts<S> for AccessClaims
 where
@@ -43,7 +44,7 @@ async fn decode_token_from_request_part<S, T>(parts: &mut Parts, state: &S) -> R
 where
     AppState: FromRef<S>,
     S: Send + Sync,
-    T: for<'de> serde::Deserialize<'de> + std::fmt::Debug + ClaimsMethods + Sync + Send,
+    T: for<'de> serde::Deserialize<'de> + std::fmt::Debug + Claimable + Sync + Send,
 {
     // Extract the token from the authorization header.
     let TypedHeader(Authorization(bearer)) = parts
@@ -51,18 +52,18 @@ where
         .await
         .map_err(|_| {
             tracing::error!("Invalid authorization header");
-            AppErrorCode::WrongCredentials
+            AppError::new(AppErrorCode::AuthenticationWrongCredentials, ErrorEntry::new("Invalid authorization header"))
         })?;
 
     // Take the state from a reference.
-    let state = Arc::from_ref(state);
+    let state = Arc::new(AppState::from_ref(state));
 
     // Decode the token.
-    let claims = decode_token::<T>(bearer.token(), &state.config)?;
+    let claims = decode_token::<T>(bearer.token(), &state.app_config)?;
 
     // Check for revoked tokens if enabled by configuration.
-    if state.config.jwt_enable_revoked_tokens {
-        auth::validate_revoked(&claims, &state).await?
+    if state.app_config.jwt_enable_revoked_tokens {
+        auth_utils::validate_revoked(&claims, &state).await?
     }
     Ok(claims)
 }

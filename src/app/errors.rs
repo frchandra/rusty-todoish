@@ -55,10 +55,8 @@ impl Display for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        tracing::error!("Error response: {:?}", self);
-        let status_code =
-            StatusCode::from_u16(self.status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-        (status_code, Json(self)).into_response()
+        let status_code = StatusCode::UNAUTHORIZED;;
+        status_code.into_response()
     }
 }
 
