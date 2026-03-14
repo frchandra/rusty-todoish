@@ -2,6 +2,12 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter, Result};
 
+use axum::{
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
+
 pub struct AppError {
     pub error_code: AppErrorCode,
     pub error_details: Vec<ErrorEntry>,
@@ -46,6 +52,16 @@ impl Display for AppError {
         )
     }
 }
+
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        tracing::error!("Error response: {:?}", self);
+        let status_code =
+            StatusCode::from_u16(self.status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+        (status_code, Json(self)).into_response()
+    }
+}
+
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]

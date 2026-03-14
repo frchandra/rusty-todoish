@@ -5,7 +5,7 @@ use axum::{
     Json,
 };
 
-use crate::app::errors::AppErrorCode;
+use crate::{app::errors::{AppError, AppErrorCode}, rest::sessions::claim::{AccessClaims, Claimable}};
 use crate::app::services::notes_services;
 use crate::{
     app::state::AppState,
@@ -16,9 +16,19 @@ use crate::{
 };
 
 pub async fn note_list_handler(
+    
+    // access_claims: AccessClaims,
     Query(opts): Query<FilterOptions>,
     State(app_state): State<AppState>,
+    
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    // access_claims.validate_role_admin().map_err(|e| {
+    //     let error_response = serde_json::json!({
+    //         "status": "error",
+    //         "message": "Unauthorized",
+    //     });
+    //     (StatusCode::UNAUTHORIZED, Json(error_response))
+    // });
     // Param
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
