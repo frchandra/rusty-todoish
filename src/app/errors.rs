@@ -1,12 +1,10 @@
-use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter, Result};
-
 use crate::app::constant::*;
 use axum::{
     Json,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use serde::{Deserialize, Serialize};
 
 pub struct AppError {
     pub error_code: AppErrorCode,
@@ -32,14 +30,12 @@ impl From<sqlx::Error> for AppError {
     }
 }
 
-//implement Display for AppError
-impl Display for AppError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(
-            f,
-            "AppError: {:?}, Details: {}",
-            self.error_code, self.error_details
-        )
+impl From<redis::RedisError> for AppError {
+    fn from(error: redis::RedisError) -> Self {
+        Self {
+            error_code: AppErrorCode::RedisError,
+            error_details: error.to_string(),
+        }
     }
 }
 
