@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::app::config::AppConfig;
 use crate::app::state::AppState;
 use crate::infra::postgres::instance::create_instance;
@@ -5,11 +6,14 @@ use crate::infra::redis::instance::open as open_redis_connection;
 use crate::rest::routes::{health_check_routes, notes_routes, users_routes};
 use axum::Router;
 use tokio::net::TcpListener;
+use tokio::sync::Mutex;
 
 pub async fn build_server_and_listener() -> Result<(Router, TcpListener), std::io::Error> {
     let app_config = AppConfig::from_env();
     let db_pool = create_instance(app_config.database_url.as_str()).await;
-    let redis_connection = open_redis_connection(app_config.redis_url.as_str()).await;
+    let redis_connection = Arc::new(Mutex::new(
+        open_redis_connection(app_config.redis_url.as_str()).await,
+    ));
 
     let bind_addr = app_config.service_url.clone();
 
