@@ -40,11 +40,30 @@ pub fn contains_role_admin(roles: &str) -> bool {
     roles.split(',').map(|s| s.trim()).any(|x| x == role_admin)
 }
 
+pub fn contains_role_user(roles: &str) -> bool {
+    if roles.is_empty() {
+        return false;
+    }
+
+    let role_user = UserRole::Customer.to_string();
+    roles.split(',').map(|s| s.trim()).any(|x| x == role_user)
+}
+
 pub fn is_role_admin(roles: &str) -> Result<(), AppError> {
     if !contains_role_admin(roles) {
         return Err(AppError::new(
             AppErrorCode::AuthenticationForbidden,
             "User does not have admin role",
+        ));
+    }
+    Ok(())
+}
+
+pub fn is_role_admin_or_user(roles: &str) -> Result<(), AppError> {
+    if !(contains_role_admin(roles) || contains_role_user(roles)) {
+        return Err(AppError::new(
+            AppErrorCode::AuthenticationForbidden,
+            "User does not have admin or user role",
         ));
     }
     Ok(())
