@@ -3,6 +3,10 @@ pub const USER_ROLE_ADMIN: &str = "admin";
 pub const USER_ROLE_COMMON: &str = "common";
 pub const USER_ROLE_GUEST: &str = "guest";
 
+pub const JWT_REDIS_REVOKE_GLOBAL_BEFORE_KEY: &str = "jwt.revoke.global.before";
+pub const JWT_REDIS_REVOKE_USER_BEFORE_KEY: &str = "jwt.revoke.user.before";
+pub const JWT_REDIS_REVOKED_TOKENS_KEY: &str = "jwt.revoked.tokens";
+
 // Numeric error code constants (HTTP-style status codes)
 pub const E_INTERNAL_SERVER_ERROR: u16 = 500;
 
