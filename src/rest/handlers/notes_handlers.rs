@@ -7,8 +7,8 @@ use axum::{
 
 use crate::app::services::notes_services;
 use crate::{
-    app::errors::{AppError, AppErrorCode},
-    rest::sessions::claim::{AccessClaims, Claimable},
+    app::errors::{AppError},
+    rest::sessions::token::{AccessToken, Claimable},
 };
 use crate::{
     app::state::AppState,
@@ -19,78 +19,34 @@ use crate::{
 };
 
 pub async fn note_list_handler(
-    access_claims: AccessClaims,
+    access_claims: AccessToken,
     Query(opts): Query<FilterOptions>,
     State(app_state): State<AppState>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    access_claims.validate_role_admin().map_err(|e| {
-        let error_response = serde_json::json!({
-            "status": "error",
-            "message": "Unauthorized",
-        });
-        (StatusCode::UNAUTHORIZED, Json(error_response))
-    })?;
-    // Param
-
+) -> Result<impl IntoResponse, AppError> {
+    access_claims.validate_role_admin()?;
     let limit = opts.limit.unwrap_or(10);
     let offset = (opts.page.unwrap_or(1) - 1) * limit;
-
-    let notes = notes_services::list_notes(&app_state, limit as i64, offset as i64)
-        .await
-        .map_err(|e| {
-            let error_response = serde_json::json!({
-                "status": "error",
-                "message": format!("Database error: {}", e),
-            });
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
-        })?;
-
-    // Response
-    let note_responses = notes
-        .iter()
-        .map(to_note_response)
-        .collect::<Vec<NoteModelResponse>>();
-
-    let json_response = serde_json::json!(note_responses);
-
-    Ok(Json(json_response))
+    let notes = notes_services::list_notes(&app_state, limit as i64, offset as i64).await?;
+    let note_responses = notes.iter().map(to_note_response).collect::<Vec<_>>();
+    Ok(Json(serde_json::json!(note_responses)))
 }
 
 // implement get_note_handler
 pub async fn get_note_handler(
     Path(note_id): Path<uuid::Uuid>,
     State(app_state): State<AppState>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    let note = notes_services::get_note_by_id(&app_state, note_id)
-        .await
-        .map_err(|e| {
-            let error_response = serde_json::json!({
-                "message": format!("{}", e),
-            });
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
-        })?;
-
+) -> Result<impl IntoResponse, AppError> {
+    let note = notes_services::get_note_by_id(&app_state, note_id).await?;
     let note_response = to_note_response(&note);
-
     Ok(Json(serde_json::json!(note_response)))
 }
 
 pub async fn create_note_handler(
     State(app_state): State<AppState>,
     Json(body): Json<CreateNoteSchema>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    let note =
-        notes_services::create_note(&app_state, &body.title, &body.content, body.is_published)
-            .await
-            .map_err(|e| {
-                let error_response = serde_json::json!({
-                    "message": format!("{}", e),
-                });
-                (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
-            })?;
-
+) -> Result<impl IntoResponse, AppError> {
+    let note = notes_services::create_note(&app_state, &body.title, &body.content, body.is_published).await?;
     let note_response = to_note_response(&note);
-
     Ok((StatusCode::OK, Json(serde_json::json!(note_response))))
 }
 
@@ -98,52 +54,28 @@ pub async fn update_note_handler(
     Path(note_id): Path<uuid::Uuid>,
     State(app_state): State<AppState>,
     Json(body): Json<UpdateNoteSchema>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<impl IntoResponse, AppError> {
     notes_services::update_note_by_id(
         &app_state,
         note_id,
         body.title,
         body.content,
         body.is_published,
-    )
-    .await
-    .map_err(|e| {
-        let status_code = match e.error_code {
-            AppErrorCode::ResourceNotFound => StatusCode::NOT_FOUND,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
-        };
-        let error_response = serde_json::json!({
-            "message": format!("{}", e),
-        });
-        (status_code, Json(error_response))
-    })?;
-
+    ).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
 pub async fn delete_note_handler(
     Path(note_id): Path<uuid::Uuid>,
     State(app_state): State<AppState>,
-) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    notes_services::delete_note_by_id(&app_state, note_id)
-        .await
-        .map_err(|e| {
-            let status_code = match e.error_code {
-                AppErrorCode::ResourceNotFound => StatusCode::NOT_FOUND,
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            };
-            let error_response = serde_json::json!({
-                "message": format!("{}", e),
-            });
-            (status_code, Json(error_response))
-        })?;
-
+) -> Result<impl IntoResponse, AppError> {
+    notes_services::delete_note_by_id(&app_state, note_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
 fn to_note_response(note: &NoteModel) -> NoteModelResponse {
     NoteModelResponse {
-        id: note.id.to_owned(),
+        id: note.id,
         title: note.title.to_owned(),
         content: note.content.to_owned(),
         is_published: note.is_published,

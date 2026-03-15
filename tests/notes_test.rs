@@ -4,6 +4,7 @@ use crate::common::test_server;
 use common::dummy_factory;
 use serial_test::serial;
 use std::{env, sync::LazyLock};
+use reqwest::header;
 
 static ROOT_URL: LazyLock<String> = LazyLock::new(|| {
     let service_host = env::var("SERVICE_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
@@ -69,9 +70,46 @@ async fn list_notes_test() {
 async fn get_note_by_id_test() {
     test_server::start_server().await;
 
-    let url = format!("{}/notes", &*ROOT_URL);
+    // 1) Login as admin (hardcoded)
+    let login_url = format!("{}/user/login", &*ROOT_URL);
 
-    let response = reqwest::get(&url).await.expect("request failed");
+    let payload = serde_json::json!({
+        "email": "admin@example.com",
+        "password": "admin_password"
+    });
+
+    let client = reqwest::Client::new();
+    let login_resp = client
+        .post(&login_url)
+        .json(&payload)
+        .send()
+        .await
+        .expect("login request failed");
+
+    assert_eq!(login_resp.status(), reqwest::StatusCode::OK);
+
+    let login_body = login_resp
+        .text()
+        .await
+        .expect("failed to read login response body");
+
+    let login_json: serde_json::Value =
+        serde_json::from_str(&login_body).expect("login response is not valid JSON");
+
+    // Adjust the JSON path if your API uses a different field name
+    let token = login_json["access_token"]
+        .as_str()
+        .or_else(|| login_json["token"].as_str())
+        .expect("missing access token in login response");
+
+    let notes_url = format!("{}/notes", &*ROOT_URL);
+
+    let response = client.get(&notes_url)
+        .header(header::AUTHORIZATION, format!("Bearer {}", token))
+        .send()
+        .await
+        .expect("notes request failed");
+
 
     assert_eq!(response.status(), reqwest::StatusCode::OK);
 
