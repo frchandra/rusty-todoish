@@ -13,10 +13,10 @@ use axum_extra::{
 
 use crate::app::errors::*;
 use crate::app::state::AppState;
-use crate::rest::sessions::auth_utils;
-use crate::rest::sessions::claim::{AccessClaims, Claimable, RefreshClaims, decode_token};
+use crate::rest::sessions::token;
+use crate::rest::sessions::token::{AccessToken, Claimable, RefreshToken, decode_token};
 
-impl<S> FromRequestParts<S> for AccessClaims
+impl<S> FromRequestParts<S> for AccessToken
 where
     AppState: FromRef<S>,
     S: Send + Sync,
@@ -28,7 +28,7 @@ where
     }
 }
 
-impl<S> FromRequestParts<S> for RefreshClaims
+impl<S> FromRequestParts<S> for RefreshToken
 where
     AppState: FromRef<S>,
     S: Send + Sync,
@@ -65,8 +65,8 @@ where
     let claims = decode_token::<T>(bearer.token(), &state.app_config)?;
 
     // Check for revoked tokens if enabled by configuration.
-    if state.app_config.jwt_enable_revoked_tokens {
-        auth_utils::validate_revoked(&claims, &state).await?
+    if !state.app_config.jwt_enable_revoked_tokens {
+        token::validate_revoked(&claims, &state).await?
     }
     Ok(claims)
 }
