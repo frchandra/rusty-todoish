@@ -206,6 +206,19 @@ pub async fn validate_revoked<T: std::fmt::Debug + Claimable + Sync + Send>(
     Ok(())
 }
 
+pub fn validate_token_type(claims: &RefreshToken, expected_type: TokenType) -> bool {
+    if claims.typ == expected_type as u8 {
+        true
+    } else {
+        tracing::error!(
+            "Invalid token type. Expected {:?}, Found {:?}",
+            expected_type,
+            TokenType::from(claims.typ),
+        );
+        false
+    }
+}
+
 pub async fn revoke_global(state: &AppState) -> RedisResult<()> {
     let timestamp_now = chrono::Utc::now().timestamp() as usize;
     tracing::debug!("setting a timestamp for global revoke: {}", timestamp_now);
