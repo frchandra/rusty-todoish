@@ -9,7 +9,7 @@ use crate::app::errors::{AppError};
 use crate::app::services::users_services;
 use crate::app::state::AppState;
 use crate::rest::schemas::user_schemas::{LoginUserSchema};
-use crate::rest::sessions::token;
+use crate::rest::sessions::token::{self, RefreshToken};
 use crate::rest::sessions::token::{AccessToken, Claimable, TokenPair};
 
 pub async fn login_handler(
@@ -19,6 +19,14 @@ pub async fn login_handler(
 	let user = users_services::login(&app_state, &body.email, &body.password).await?;
     let tokens =  token::generate_tokens(user, &app_state.app_config);
 	Ok((StatusCode::OK, tokens_to_response(tokens)))
+}
+
+pub async fn logout_handler(
+    State(state): State<AppState>,
+    refresh_claims: RefreshToken,
+) -> Result<impl IntoResponse, AppError> {
+    users_services::logout(refresh_claims, state).await?;
+    Ok(())
 }
 
 pub async fn revoke_all_handler(
