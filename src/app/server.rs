@@ -1,12 +1,13 @@
-use std::sync::Arc;
 use crate::app::config::AppConfig;
 use crate::app::state::AppState;
 use crate::infra::postgres::instance::create_instance;
 use crate::infra::redis::instance::open as open_redis_connection;
 use crate::rest::routes::{health_check_routes, notes_routes, users_routes};
 use axum::Router;
+use std::sync::Arc;
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
+use tower_http::cors::{Any, CorsLayer};
 
 pub async fn build_server_and_listener() -> Result<(Router, TcpListener), std::io::Error> {
     let app_config = AppConfig::from_env();
@@ -23,7 +24,25 @@ pub async fn build_server_and_listener() -> Result<(Router, TcpListener), std::i
         redis_connection,
     };
 
+    // Build a CORS layer.
+    // see https://docs.rs/tower-http/latest/tower_http/cors/index.html
+    // for more details
+    let cors_layer = CorsLayer::new().allow_origin(Any);
+    // let cors_header_value = config.service_http_addr().parse::<HeaderValue>().unwrap();
+    // let cors_layer = CorsLayer::new()
+    //      .allow_origin(cors_header_value)
+    //      .allow_methods([
+    //          Method::HEAD,
+    //          Method::GET,
+    //          Method::POST,
+    //          Method::PATCH,
+    //          Method::DELETE,
+    //      ])
+    //      .allow_credentials(true)
+    //      .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
+
     let app = Router::new()
+        .layer(cors_layer)
         .merge(health_check_routes::routes())
         .merge(notes_routes::routes())
         .merge(users_routes::routes())
