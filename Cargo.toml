@@ -18,3 +18,4 @@ tracing = "0.1.44"
 redis = { version = "1.0.4", features = ["tokio-comp"] }
 jsonwebtoken = { version = "10", default-features = false, features = ["aws_lc_rs"] }
 axum-extra = { version = "0.12.5", features = ["typed-header"] }
+tower-http = { version = "0.6.8", features = ["cors"] }

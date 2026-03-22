@@ -1670,6 +1670,7 @@ dependencies = [
  "serial_test",
  "sqlx",
  "tokio",
+ "tower-http",
  "tracing",
  "uuid",
 ]
