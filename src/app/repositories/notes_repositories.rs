@@ -1,3 +1,4 @@
+use sqlx::{Executor, Postgres};
 use crate::app::state::AppState;
 use crate::models::note::NoteModel;
 
@@ -33,12 +34,14 @@ pub async fn get_note_by_id(
     Ok(note)
 }
 
-pub async fn create_note(
-    app_state: &AppState,
+pub async fn create_note<'e, Tx>(
+    tx: Tx,
     title: &str,
     content: &str,
     is_published: bool,
-) -> Result<NoteModel, sqlx::Error> {
+) -> Result<NoteModel, sqlx::Error>
+where    Tx: Executor<'e, Database = Postgres>,
+{
     let note = sqlx::query_as!(
         NoteModel,
         r#"
@@ -50,19 +53,22 @@ pub async fn create_note(
         content,
         is_published
     )
-    .fetch_one(&app_state.db_pool)
+    .fetch_one(tx)
     .await?;
 
     Ok(note)
 }
 
-pub async fn update_note_by_id(
-    app_state: &AppState,
+pub async fn update_note_by_id<'e, Tx>(
+    tx: Tx,
     note_id: uuid::Uuid,
     title: Option<String>,
     content: Option<String>,
     is_published: Option<bool>,
-) -> Result<NoteModel, sqlx::Error> {
+) -> Result<NoteModel, sqlx::Error>
+where
+    Tx: Executor<'e, Database = Postgres>,
+{
     let note = sqlx::query_as!(
         NoteModel,
         r#"
@@ -78,7 +84,7 @@ pub async fn update_note_by_id(
         content,
         is_published
     )
-    .fetch_one(&app_state.db_pool)
+    .fetch_one(tx)
     .await?;
 
     Ok(note)

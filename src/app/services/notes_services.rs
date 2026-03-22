@@ -31,14 +31,13 @@ pub async fn create_note(
     is_published: Option<bool>,
 ) -> Result<NoteModel, AppError> {
     let note = notes_repositories::create_note(
-        &app_state,
+        &app_state.db_pool,
         title,
         content,
         is_published.unwrap_or(false),
     )
     .await
     .map_err(AppError::from)?;
-
     Ok(note)
 }
 
@@ -50,7 +49,7 @@ pub async fn update_note_by_id(
     is_published: Option<bool>,
 ) -> Result<NoteModel, AppError> {
     let note = notes_repositories::update_note_by_id(
-        &app_state,
+        &app_state.db_pool,
         note_id,
         title,
         content,
@@ -78,4 +77,46 @@ pub async fn delete_note_by_id(
     }
 
     Ok(())
+}
+
+pub async fn add_then_update_note( // With db transaction
+    app_state: &AppState,
+    title: &str,
+    content: &str,
+    is_published: Option<bool>,
+) -> Result<NoteModel, AppError> {
+    let mut tx = app_state.db_pool.begin().await.map_err(AppError::from)?;
+
+    let result = async {
+        let note = notes_repositories::create_note(
+            &mut *tx,
+            title,
+            content,
+            is_published.unwrap_or(false),
+        )
+            .await?;
+
+        let updated_note = notes_repositories::update_note_by_id(
+            &mut *tx,
+            note.id,
+            Some(format!("{} - Updated", note.title)),
+            None,
+            None,
+        )
+            .await?;
+
+        Ok::<NoteModel, sqlx::Error>(updated_note)  // return the value directly
+    }
+        .await;
+
+    match result {
+        Ok(updated_note) => {
+            tx.commit().await?;
+            Ok(updated_note)  // unpacked cleanly from Ok
+        }
+        Err(e) => {
+            tx.rollback().await.ok();
+            Err(e.into()) // convert sqlx::Error to AppError using the From trait
+        }
+    }
 }
