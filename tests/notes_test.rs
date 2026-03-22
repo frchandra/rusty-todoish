@@ -2,9 +2,12 @@ pub mod common;
 
 use crate::common::test_server;
 use common::dummy_factory;
+use reqwest::header;
 use serial_test::serial;
 use std::{env, sync::LazyLock};
-use reqwest::header;
+use crate::common::dummy_factory::clear_notes;
+use serde_json::Value;
+
 
 static ROOT_URL: LazyLock<String> = LazyLock::new(|| {
     let service_host = env::var("SERVICE_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
@@ -26,17 +29,51 @@ async fn clear_notes_table_test() {
     dummy_factory::clear_notes().await.unwrap();
 }
 
-use crate::common::dummy_factory::clear_notes;
-use serde_json::Value;
+async fn login_and_get_token(client: &reqwest::Client, email: &str, password: &str) -> String {
+    let login_url = format!("{}/user/login", &*ROOT_URL);
+
+    let payload = serde_json::json!({
+        "email": email,
+        "password": password
+    });
+
+    let resp = client
+        .post(&login_url)
+        .json(&payload)
+        .send()
+        .await
+        .expect("login request failed");
+
+    assert_eq!(resp.status(), reqwest::StatusCode::OK);
+
+    let body = resp.text().await.expect("failed to read login response body");
+    let json: serde_json::Value =
+        serde_json::from_str(&body).expect("login response is not valid JSON");
+
+    json["access_token"]
+        .as_str()
+        .or_else(|| json["token"].as_str())
+        .expect("missing access token in login response")
+        .to_string()
+}
 
 #[tokio::test]
 #[serial]
 async fn list_notes_test() {
     test_server::start_server().await;
 
+    // 1) Login as admin or user (hardcoded)
+    let client = reqwest::Client::new();
+    // Adjust the JSON path if your API uses a different field name
+    let token = login_and_get_token(&client, "regular@example.com", "regular_password").await;
+
     let url = format!("{}/notes", &*ROOT_URL);
 
-    let response = reqwest::get(&url).await.expect("request failed");
+    let response = client.get(&url)
+        .header(header::AUTHORIZATION, format!("Bearer {}", token))
+        .send()
+        .await
+        .expect("request failed");
 
     assert_eq!(response.status(), reqwest::StatusCode::OK);
 
@@ -59,57 +96,29 @@ async fn list_notes_test() {
     }
 }
 
-// Create a test unit for testing get one note by id endpoint /notes/{id}
-// here is the flow
+// a test unit for testing get one note by id endpoint /notes/{id}
 // get all notes and get the id (uuid) of the first note
 // then call the endpoint /notes/{id} with the id of the first note
 // then assert that the response status is 200 OK
-// then just print the response body in json format in terminal
+// then just print the response body in JSON format in terminal
 #[tokio::test]
 #[serial]
 async fn get_note_by_id_test() {
     test_server::start_server().await;
 
-    // 1) Login as admin (hardcoded)
-    let login_url = format!("{}/user/login", &*ROOT_URL);
-
-    let payload = serde_json::json!({
-        "email": "admin@example.com",
-        "password": "admin_password"
-    });
-
+    // 1) Login as admin or user (hardcoded)
     let client = reqwest::Client::new();
-    let login_resp = client
-        .post(&login_url)
-        .json(&payload)
-        .send()
-        .await
-        .expect("login request failed");
-
-    assert_eq!(login_resp.status(), reqwest::StatusCode::OK);
-
-    let login_body = login_resp
-        .text()
-        .await
-        .expect("failed to read login response body");
-
-    let login_json: serde_json::Value =
-        serde_json::from_str(&login_body).expect("login response is not valid JSON");
-
     // Adjust the JSON path if your API uses a different field name
-    let token = login_json["access_token"]
-        .as_str()
-        .or_else(|| login_json["token"].as_str())
-        .expect("missing access token in login response");
+    let token = login_and_get_token(&client, "regular@example.com", "regular_password").await;
 
     let notes_url = format!("{}/notes", &*ROOT_URL);
 
-    let response = client.get(&notes_url)
+    let response = client
+        .get(&notes_url)
         .header(header::AUTHORIZATION, format!("Bearer {}", token))
         .send()
         .await
         .expect("notes request failed");
-
 
     assert_eq!(response.status(), reqwest::StatusCode::OK);
 
@@ -125,7 +134,12 @@ async fn get_note_by_id_test() {
 
     // Call endpoint /notes/{id} with the id of the first note
     let url = format!("{}/notes/{}", &*ROOT_URL, first_note_id);
-    let response = reqwest::get(&url).await.expect("request failed");
+    let response = client
+        .get(&url)
+        .header(header::AUTHORIZATION, format!("Bearer {}", token))
+        .send()
+        .await
+        .expect("request failed");
 
     assert_eq!(response.status(), reqwest::StatusCode::OK);
 
@@ -144,7 +158,6 @@ async fn get_note_by_id_test() {
 #[serial]
 async fn create_note_test() {
     clear_notes().await.expect("cannot clear notes table");
-
     test_server::start_server().await;
 
     let url = format!("{}/notes", &*ROOT_URL);
@@ -165,20 +178,43 @@ async fn create_note_test() {
     });
 
     let client = reqwest::Client::new();
-    let response = client
+
+    // 1) Login as user, create should fail
+    let user_token = login_and_get_token(&client, "regular@example.com", "regular_password").await;
+
+    let user_create = client
         .post(&url)
+        .header(header::AUTHORIZATION, format!("Bearer {}", user_token))
         .json(&payload)
         .send()
         .await
-        .expect("request failed");
+        .expect("user create note request failed");
 
-    assert_eq!(response.status(), reqwest::StatusCode::OK);
+    assert!(
+        user_create.status() == reqwest::StatusCode::UNAUTHORIZED
+            || user_create.status() == reqwest::StatusCode::FORBIDDEN,
+        "expected unauthorized/forbidden for user, got {}",
+        user_create.status()
+    );
 
-    let body = response.text().await.expect("failed to read response body");
-    let json: Value = serde_json::from_str(&body).expect("response is not valid JSON");
+    // 2) Login as admin, create should succeed
+    let admin_token = login_and_get_token(&client, "admin@example.com", "admin_password").await;
 
-    let pretty = serde_json::to_string_pretty(&json).unwrap();
-    println!("{}", pretty);
+    let admin_create = client
+        .post(&url)
+        .header(header::AUTHORIZATION, format!("Bearer {}", admin_token))
+        .json(&payload)
+        .send()
+        .await
+        .expect("admin create note request failed");
+
+    assert_eq!(admin_create.status(), reqwest::StatusCode::OK);
+
+    let body = admin_create
+        .text()
+        .await
+        .expect("failed to read response body");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("response is not valid JSON");
 
     assert_eq!(json["title"].as_str().unwrap(), randomized_title);
     assert_eq!(json["content"].as_str().unwrap(), randomized_content);
@@ -213,8 +249,12 @@ async fn update_note_by_id_test() {
     });
 
     let client = reqwest::Client::new();
+    // 1) Login as user, create should fail
+    let admin_token = login_and_get_token(&client, "admin@example.com", "admin_password").await;
+
     let create_response = client
         .post(&url)
+        .header(header::AUTHORIZATION, format!("Bearer {}", admin_token))
         .json(&create_payload)
         .send()
         .await
@@ -226,7 +266,8 @@ async fn update_note_by_id_test() {
         .text()
         .await
         .expect("failed to read response body");
-    let create_json: Value = serde_json::from_str(&create_body).expect("response is not valid JSON");
+    let create_json: Value =
+        serde_json::from_str(&create_body).expect("response is not valid JSON");
 
     let note_id = create_json["id"].as_str().expect("missing note id");
 
@@ -242,6 +283,7 @@ async fn update_note_by_id_test() {
     let update_url = format!("{}/notes/{}", &*ROOT_URL, note_id);
     let update_response = client
         .put(&update_url)
+        .header(header::AUTHORIZATION, format!("Bearer {}", admin_token))
         .json(&update_payload)
         .send()
         .await
@@ -249,7 +291,12 @@ async fn update_note_by_id_test() {
 
     assert_eq!(update_response.status(), reqwest::StatusCode::NO_CONTENT);
 
-    let get_response = reqwest::get(&update_url).await.expect("request failed");
+    let get_response = client
+        .get(&update_url)
+        .header(header::AUTHORIZATION, format!("Bearer {}", admin_token))
+        .send()
+        .await
+        .expect("request failed");
 
     assert_eq!(get_response.status(), reqwest::StatusCode::OK);
 
@@ -301,7 +348,8 @@ async fn delete_note_by_id_test() {
         .text()
         .await
         .expect("failed to read response body");
-    let create_json: Value = serde_json::from_str(&create_body).expect("response is not valid JSON");
+    let create_json: Value =
+        serde_json::from_str(&create_body).expect("response is not valid JSON");
 
     let note_id = create_json["id"].as_str().expect("missing note id");
 
@@ -338,4 +386,57 @@ async fn delete_note_by_id_test() {
         .any(|note| note["id"].as_str() == Some(note_id));
 
     assert!(!contains_deleted);
+}
+
+#[tokio::test]
+#[serial]
+async fn add_then_update_note_test() {
+    // SETUP START
+    clear_notes().await.expect("cannot clear notes table");
+    test_server::start_server().await;
+    let url = format!("{}/notes/add-then-update", &*ROOT_URL);
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let randomized_title = format!("My new note {}", nonce);
+    let randomized_content = format!("Hello from integration test {}", nonce);
+    let randomized_is_published = nonce % 2 == 0;
+    let payload = serde_json::json!({
+        "title": randomized_title,
+        "content": randomized_content,
+        "is_published": randomized_is_published
+    });
+    let client = reqwest::Client::new();
+    let admin_token = login_and_get_token(&client, "admin@example.com", "admin_password").await;
+    // SETUP END
+
+
+    let admin_create = client
+        .post(&url)
+        .header(header::AUTHORIZATION, format!("Bearer {}", admin_token))
+        .json(&payload)
+        .send()
+        .await
+        .expect("admin create note request failed");
+
+    assert_eq!(admin_create.status(), reqwest::StatusCode::OK);
+
+    let body = admin_create
+        .text()
+        .await
+        .expect("failed to read response body");
+    let json: serde_json::Value = serde_json::from_str(&body).expect("response is not valid JSON");
+
+    //print the JSON response in pretty format
+    let pretty = serde_json::to_string_pretty(&json).unwrap();
+    println!("{}", pretty);
+
+    assert_ne!(json["title"].as_str().unwrap(), randomized_title);
+    assert_eq!(json["content"].as_str().unwrap(), randomized_content);
+    assert_eq!(
+        json["is_published"].as_bool().unwrap(),
+        randomized_is_published
+    );
+    assert!(json["id"].as_str().is_some());
 }
