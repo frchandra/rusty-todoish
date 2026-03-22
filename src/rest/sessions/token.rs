@@ -31,6 +31,7 @@ impl From<u8> for TokenType {
 
 pub trait Claimable {
     fn validate_role_admin(&self) -> Result<(), AppError>;
+    fn validate_role_admin_or_user(&self) -> Result<(), AppError>;
     fn get_sub(&self) -> &str;
     fn get_exp(&self) -> usize;
     fn get_iat(&self) -> usize;
@@ -57,6 +58,9 @@ pub struct AccessToken {
 impl Claimable for AccessToken {
     fn validate_role_admin(&self) -> Result<(), AppError> {
         role::is_role_admin(&self.role)
+    }
+    fn validate_role_admin_or_user(&self) -> Result<(), AppError> {
+        role::is_role_admin_or_user(&self.role)
     }
     fn get_sub(&self) -> &str {
         &self.sub
@@ -99,6 +103,11 @@ impl Claimable for RefreshToken {
     fn validate_role_admin(&self) -> Result<(), AppError> {
         role::is_role_admin(&self.role)
     }
+
+    fn validate_role_admin_or_user(&self) -> Result<(), AppError> {
+        role::is_role_admin_or_user(&self.role)
+    }
+
     fn get_sub(&self) -> &str {
         &self.sub
     }
