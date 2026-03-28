@@ -4,7 +4,7 @@ use axum::{
 };
 
 use crate::app::state::AppState;
-use crate::rest::handlers::users_handlers::*;
+use crate::rest::handlers::auth_handlers::*;
 
 pub fn routes() -> Router<AppState> {
 	Router::new()

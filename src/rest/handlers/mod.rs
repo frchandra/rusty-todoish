@@ -1,3 +1,3 @@
 pub mod health_check_handlers;
 pub mod notes_handlers;
-pub mod users_handlers;
+pub mod auth_handlers;
