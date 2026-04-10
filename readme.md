@@ -14,7 +14,6 @@ To run the server:\
 `cargo run`\
 `cargo build`
 
-
 ## Project Structure
 
 - `src/`: Source code for the project
@@ -31,6 +30,7 @@ To run the server:\
 - `tests/`: Contains integration tests for the application, ensuring that all components work together as expected.
 
 ## Features
+- Graceful shutdown with signal handling
 - CDRU operations for todo items
 - In-house error handling
 - CORS middleware
