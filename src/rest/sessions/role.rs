@@ -1,6 +1,6 @@
 use std::fmt::Display;
 // use crate::rest::sessions::auth_utils::AuthError;
-use crate::app::{constant::*, errors::*};
+use crate::core::{constant::*, errors::*};
 
 pub enum UserRole {
     Admin,

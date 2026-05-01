@@ -2,16 +2,16 @@ use dotenvy::dotenv;
 use tokio::signal;
 use tokio::signal::unix;
 use tokio::signal::unix::SignalKind;
-use rusty_todoish::app;
+use rusty_todoish::core;
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
     println!("Starting server...");
 
-    let (server, listener) = app::server::build_server_and_listener()
+    let (server, listener) = core::server::build_server_and_listener()
         .await
-        .expect("Failed to build app and listener");
+        .expect("Failed to build core and listener");
     //run the server
     axum::serve(listener, server.into_make_service())
         .with_graceful_shutdown(shutdown_signal())

@@ -5,7 +5,7 @@ use crate::rest::handlers::notes_handlers::{
 use axum::routing::post;
 use axum::{Router, routing::get};
 
-use crate::app::state::AppState;
+use crate::core::state::AppState;
 
 pub fn routes() -> Router<AppState> {
     Router::new()

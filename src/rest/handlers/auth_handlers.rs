@@ -5,9 +5,9 @@ use axum::{
 	Json,
 };
 use serde_json::json;
-use crate::app::errors::{AppError};
-use crate::app::services::users_services;
-use crate::app::state::AppState;
+use crate::core::errors::{AppError};
+use crate::core::services::users_services;
+use crate::core::state::AppState;
 use crate::rest::schemas::user_schemas::{LoginUserSchema};
 use crate::rest::sessions::token::{self, RefreshToken};
 use crate::rest::sessions::token::{AccessToken, Claimable, TokenPair};

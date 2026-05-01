@@ -11,8 +11,8 @@ use axum_extra::{
     headers::{Authorization, authorization::Bearer},
 };
 
-use crate::app::errors::*;
-use crate::app::state::AppState;
+use crate::core::errors::*;
+use crate::core::state::AppState;
 use crate::rest::sessions::token;
 use crate::rest::sessions::token::{AccessToken, Claimable, RefreshToken, decode_token};
 

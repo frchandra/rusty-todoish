@@ -9,7 +9,7 @@ use crate::{
     }
 };
 
-use crate::app::state::AppState;
+use crate::core::state::AppState;
 
 pub fn routes() -> Router<AppState> {
     Router::new()

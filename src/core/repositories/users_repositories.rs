@@ -1,4 +1,4 @@
-use crate::app::state::AppState;
+use crate::core::state::AppState;
 use crate::models::user::UserModel;
 
 // implementation of get user by email and password.

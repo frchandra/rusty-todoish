@@ -1,8 +1,8 @@
-use crate::app::config::AppConfig;
-use crate::app::constant::*;
-use crate::app::errors::AppError;
-use crate::app::errors::*;
-use crate::app::state::AppState;
+use crate::core::config::AppConfig;
+use crate::core::constant::*;
+use crate::core::errors::AppError;
+use crate::core::errors::*;
+use crate::core::state::AppState;
 use crate::models::user::UserModel;
 use crate::rest::sessions::role;
 use redis::aio::MultiplexedConnection;

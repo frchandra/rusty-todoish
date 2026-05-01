@@ -1,5 +1,5 @@
 use sqlx::{Executor, Postgres};
-use crate::app::state::AppState;
+use crate::core::state::AppState;
 use crate::models::note::NoteModel;
 
 pub async fn list_notes(

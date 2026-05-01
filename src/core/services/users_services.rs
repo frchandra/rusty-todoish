@@ -1,6 +1,6 @@
-use crate::app::errors::{AppError, AppErrorCode};
-use crate::app::repositories::users_repositories;
-use crate::app::state::AppState;
+use crate::core::errors::{AppError, AppErrorCode};
+use crate::core::repositories::users_repositories;
+use crate::core::state::AppState;
 use crate::models::user::UserModel;
 use crate::rest::sessions::token::{RefreshToken, TokenType, revoke_refresh_token, validate_token_type};
 

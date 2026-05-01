@@ -3,14 +3,14 @@ use reqwest::StatusCode;
 use std::env;
 use std::time::{Duration, Instant};
 
-use rusty_todoish::app;
+use rusty_todoish::core;
 
 pub async fn start_server() {
     dotenv().ok();
     println!("Starting server...");
-    let (server, listener) = app::server::build_server_and_listener()
+    let (server, listener) = core::server::build_server_and_listener()
         .await
-        .expect("Failed to build app and listener");
+        .expect("Failed to build core and listener");
     //run the server
     tokio::spawn(async move {
         axum::serve(listener, server.into_make_service())

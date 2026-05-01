@@ -1,4 +1,4 @@
-use crate::app::config::AppConfig;
+use crate::core::config::AppConfig;
 use std::sync::Arc;
 use sqlx::postgres::PgPool;
 use tokio::sync::Mutex;

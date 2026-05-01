@@ -5,13 +5,13 @@ use axum::{
     response::IntoResponse,
 };
 
-use crate::app::services::notes_services;
+use crate::core::services::notes_services;
 use crate::{
-    app::errors::AppError,
+    core::errors::AppError,
     rest::sessions::token::{AccessToken, Claimable},
 };
 use crate::{
-    app::state::AppState,
+    core::state::AppState,
     models::note::NoteModel,
     rest::schemas::note_schemas::{
         CreateNoteSchema, FilterOptions, NoteModelResponse, UpdateNoteSchema,

@@ -1,6 +1,6 @@
-use crate::app::errors::{AppError, AppErrorCode};
-use crate::app::repositories::notes_repositories;
-use crate::app::state::AppState;
+use crate::core::errors::{AppError, AppErrorCode};
+use crate::core::repositories::notes_repositories;
+use crate::core::state::AppState;
 use crate::models::note::NoteModel;
 
 

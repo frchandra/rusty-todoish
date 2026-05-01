@@ -3,7 +3,7 @@ use axum::{
 	Router,
 };
 
-use crate::app::state::AppState;
+use crate::core::state::AppState;
 use crate::rest::handlers::auth_handlers::*;
 
 pub fn routes() -> Router<AppState> {

@@ -1,5 +1,5 @@
-use crate::app::config::AppConfig;
-use crate::app::state::AppState;
+use crate::core::config::AppConfig;
+use crate::core::state::AppState;
 use crate::infra::postgres::instance::create_instance;
 use crate::infra::redis::instance::open as open_redis_connection;
 use crate::rest::routes::{health_check_routes, notes_routes, users_routes};
