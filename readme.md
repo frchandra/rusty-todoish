@@ -43,5 +43,3 @@ To run the server:\
 ## Endpoints
 
 # Todo
-
-- [x] refactor app to core
